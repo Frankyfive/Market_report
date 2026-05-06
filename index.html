@@ -242,10 +242,20 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 // ============================================================
 // CONFIG
 // ============================================================
+const REPO_BASE = 'https://frankyfive.github.io/Market_report/data/cache';
 const CSV_SOURCES = {
-  us: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Country_History.csv',
-  state: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_State_History.csv',
-  metro: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Metro_History.csv'
+  us: {
+    live: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Country_History.csv',
+    fallback: REPO_BASE + '/us_history.csv'
+  },
+  state: {
+    live: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_State_History.csv',
+    fallback: REPO_BASE + '/state_history.csv'
+  },
+  metro: {
+    live: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Metro_History.csv',
+    fallback: REPO_BASE + '/metro_history.csv'
+  }
 };
 
 const TARGET_STATES = { TX: 'Texas', CO: 'Colorado' };
@@ -339,26 +349,49 @@ function dbDelete(store, key) {
 // ============================================================
 // CSV Fetch + Cache
 // ============================================================
-async function fetchCSV(key, url) {
+async function fetchCSV(key, source) {
   updateStatus(key, 'loading', 'Fetching...');
+
+  // Tier 1: Try live S3
   try {
-    const resp = await fetch(url);
+    const resp = await fetch(source.live, { signal: AbortSignal.timeout(15000) });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const text = await resp.text();
-    // Cache the raw CSV text with timestamp
     await dbPut('csv_cache', key, { text, ts: Date.now() });
     updateStatus(key, 'ok', 'Live');
     return text;
   } catch (e) {
-    console.warn('Fetch failed for ' + key + ', trying cache:', e.message);
-    const cached = await dbGet('csv_cache', key);
-    if (cached) {
-      updateStatus(key, 'ok', 'Cached ' + new Date(cached.ts).toLocaleDateString());
-      return cached.text;
-    }
-    updateStatus(key, 'err', 'Unavailable');
-    return null;
+    console.warn(key + ' S3 failed:', e.message);
   }
+
+  // Tier 2: Try GitHub Pages cached copy
+  if (source.fallback) {
+    try {
+      updateStatus(key, 'loading', 'Trying cache...');
+      const resp = await fetch(source.fallback, { signal: AbortSignal.timeout(15000) });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const text = await resp.text();
+      // Merge: keep the longer dataset between GitHub cache and IndexedDB
+      const existing = await dbGet('csv_cache', key);
+      if (!existing || text.length >= existing.text.length) {
+        await dbPut('csv_cache', key, { text, ts: Date.now() });
+      }
+      updateStatus(key, 'ok', 'GitHub Cache');
+      return existing && existing.text.length > text.length ? existing.text : text;
+    } catch (e) {
+      console.warn(key + ' GitHub fallback failed:', e.message);
+    }
+  }
+
+  // Tier 3: IndexedDB local cache
+  const cached = await dbGet('csv_cache', key);
+  if (cached) {
+    updateStatus(key, 'ok', 'Local ' + new Date(cached.ts).toLocaleDateString());
+    return cached.text;
+  }
+
+  updateStatus(key, 'err', 'Unavailable');
+  return null;
 }
 
 function parseCSV(text) {
