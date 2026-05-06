@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Market Intelligence Report | Cairn Analytics</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#0f172a;--card:#1e293b;--border:#334155;--text:#e2e8f0;--muted:#94a3b8;--teal:#38bdf8;--green:#34d399;--red:#f87171;--orange:#f97316;--purple:#a78bfa;--yellow:#facc15;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;}
+.site-header{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);border-bottom:2px solid var(--teal);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;}
+.site-header h1{font-size:18px;font-weight:700;color:#fff;letter-spacing:1px;}
+.site-header .sub{color:var(--muted);font-size:10px;margin-top:3px;}
+.badge{background:var(--teal);color:#0f172a;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.status-bar{display:flex;gap:12px;padding:6px 24px;background:#0d1525;border-bottom:1px solid var(--border);font-size:10px;color:var(--muted);align-items:center;}
+.status-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px;}
+.status-dot.ok{background:var(--green);} .status-dot.loading{background:var(--yellow);animation:pulse 1s infinite;} .status-dot.err{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.tabs{display:flex;gap:4px;padding:10px 24px 0;background:#0d1525;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.tab{padding:7px 16px;border-radius:6px 6px 0 0;cursor:pointer;font-weight:600;font-size:11px;color:var(--muted);border:1px solid transparent;border-bottom:none;transition:all .2s;user-select:none;}
+.tab:hover{color:var(--text);background:var(--card);}
+.tab.active{color:var(--teal);background:var(--card);border-color:var(--border);}
+.page{display:none;padding:20px 24px;}
+.page.active{display:block;}
+.section-title{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--teal);text-transform:uppercase;margin-bottom:10px;border-left:3px solid var(--teal);padding-left:8px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:22px;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,var(--teal));}
+.kpi-label{color:var(--muted);font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.kpi-value{font-size:20px;font-weight:700;color:#fff;line-height:1;}
+.kpi-changes{margin-top:5px;}
+.kpi-row{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:600;margin-top:2px;}
+.kpi-row-lbl{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.5px;min-width:28px;}
+.kpi-row-prev{color:var(--muted);font-size:9px;margin-left:3px;}
+.pos{color:var(--green);} .neg{color:var(--red);} .neu{color:var(--muted);}
+.geo-btns{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.geo-btn{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;font-size:11px;font-weight:600;transition:all .2s;}
+.geo-btn:hover{border-color:var(--teal);color:var(--teal);}
+.geo-btn.active{background:var(--teal);color:#0f172a;border-color:var(--teal);}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.chart-title{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.chart-wrap{position:relative;height:180px;}
+.metro-table{width:100%;border-collapse:collapse;background:var(--card);border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+.metro-table th{background:#0d1525;color:var(--muted);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:9px 8px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2;}
+.metro-table th:first-child{text-align:left;}
+.metro-table td{padding:8px 8px;border-bottom:1px solid var(--border);font-size:11px;text-align:right;color:var(--text);}
+.metro-table td:first-child{text-align:left;font-weight:600;color:#fff;}
+.metro-table tr:last-child td{border-bottom:none;}
+.metro-table tr:hover td{background:rgba(56,189,248,.05);}
+.yoy-cell{font-size:9px;font-weight:700;}
+.metro-charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px;}
+.mba-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:20px;}
+.mba-table{width:100%;border-collapse:collapse;}
+.mba-table th{color:var(--muted);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:7px 10px;text-align:right;border-bottom:1px solid var(--border);}
+.mba-table th:first-child{text-align:left;}
+.mba-table td{padding:7px 10px;border-bottom:1px solid var(--border);font-size:12px;text-align:right;color:var(--text);}
+.mba-table td:first-child{text-align:left;font-weight:600;}
+.mba-table tr:last-child td{border-bottom:none;}
+.mba-table tr:hover td{background:rgba(56,189,248,.05);}
+.mba-note{color:var(--muted);font-size:9px;margin-top:10px;font-style:italic;}
+.stat-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;}
+.stat-badge.pos{background:rgba(52,211,153,.15);color:var(--green);}
+.stat-badge.neg{background:rgba(248,113,113,.15);color:var(--red);}
+.stat-badge.neu{background:rgba(148,163,184,.1);color:var(--muted);}
+.footer{text-align:center;color:var(--muted);font-size:9px;padding:20px 0 28px;}
+.input-row{display:flex;gap:10px;align-items:end;margin-bottom:16px;flex-wrap:wrap;}
+.input-group{display:flex;flex-direction:column;gap:3px;}
+.input-group label{font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.input-group input{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:12px;width:140px;}
+.input-group input:focus{outline:none;border-color:var(--teal);}
+.btn-add{background:var(--teal);color:#0f172a;border:none;border-radius:6px;padding:7px 18px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-add:hover{opacity:.85;}
+.btn-del{background:transparent;border:1px solid var(--red);color:var(--red);border-radius:4px;padding:2px 8px;font-size:9px;cursor:pointer;font-weight:600;}
+.btn-del:hover{background:rgba(248,113,113,.15);}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:#0f172a;padding:10px 20px;border-radius:8px;font-weight:700;font-size:12px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}
+.loading-overlay{position:fixed;inset:0;background:rgba(15,23,42,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;}
+.loading-overlay h2{color:var(--teal);font-size:20px;margin-bottom:10px;}
+.loading-overlay p{color:var(--muted);font-size:12px;}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@media(max-width:768px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .charts-grid,.metro-charts-grid{grid-template-columns:1fr;}
+  .tabs{gap:2px;padding:6px 12px 0;}
+  .tab{padding:5px 10px;font-size:10px;}
+  .page{padding:12px;}
+}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <h2>Loading Market Data</h2>
+  <p id="loading-msg">Connecting to Realtor.com...</p>
+</div>
+
+<div class="site-header">
+  <div>
+    <h1>MARKET INTELLIGENCE REPORT</h1>
+    <div class="sub">Realtor.com Live Data | Auto-updating | <span id="header-date"></span></div>
+  </div>
+  <div class="badge">Cairn Analytics</div>
+</div>
+
+<div class="status-bar" id="status-bar"></div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showPage('overview',this)">National Overview</div>
+  <div class="tab" onclick="showPage('metros',this)">Metro Markets</div>
+  <div class="tab" onclick="showPage('trends',this)">Metro Trends</div>
+  <div class="tab" onclick="showPage('mba',this)">MBA Purchase Index</div>
+</div>
+
+<!-- NATIONAL OVERVIEW -->
+<div class="page active" id="page-overview">
+  <div style="margin-bottom:12px;margin-top:4px;">
+    <div class="geo-btns" id="geo-btns"></div>
+  </div>
+  <div class="section-title" id="geo-label">UNITED STATES</div>
+  <div class="kpi-grid" id="kpi-grid"></div>
+  <div class="charts-grid">
+    <div class="chart-card"><div class="chart-title">Median List Price</div><div class="chart-wrap"><canvas id="ch-price"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Active Listings</div><div class="chart-wrap"><canvas id="ch-active"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">New Listings</div><div class="chart-wrap"><canvas id="ch-new"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Median Days on Market</div><div class="chart-wrap"><canvas id="ch-dom"></canvas></div></div>
+  </div>
+</div>
+
+<!-- METRO SNAPSHOT -->
+<div class="page" id="page-metros">
+  <div class="section-title" style="margin-top:4px;" id="metro-snap-title">METRO SNAPSHOT</div>
+  <div style="overflow-x:auto;">
+  <table class="metro-table">
+    <thead><tr>
+      <th>Metro</th>
+      <th>Med. List Price</th><th>YoY</th>
+      <th>Active Listings</th><th>YoY</th>
+      <th>New Listings</th><th>YoY</th>
+      <th>Days on Mkt</th><th>YoY</th>
+      <th>Price Cut %</th><th>YoY</th>
+      <th>Pending</th><th>YoY</th>
+      <th>Pend. Ratio</th><th>YoY</th>
+    </tr></thead>
+    <tbody id="metro-tbody"></tbody>
+  </table>
+  </div>
+</div>
+
+<!-- METRO TRENDS -->
+<div class="page" id="page-trends">
+  <div style="margin-bottom:12px;margin-top:4px;"><div class="geo-btns" id="metro-btns"></div></div>
+  <div class="section-title" id="metro-trend-label">DFW</div>
+  <div class="kpi-grid" id="metro-kpi-grid"></div>
+  <div class="metro-charts-grid">
+    <div class="chart-card"><div class="chart-title">Median List Price</div><div class="chart-wrap"><canvas id="mch-price"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Active Listings</div><div class="chart-wrap"><canvas id="mch-active"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">New Listings</div><div class="chart-wrap"><canvas id="mch-new"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Days on Market</div><div class="chart-wrap"><canvas id="mch-dom"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Price Reduced Share (%)</div><div class="chart-wrap"><canvas id="mch-pct"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Pending Listings</div><div class="chart-wrap"><canvas id="mch-pending"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Pending Ratio</div><div class="chart-wrap"><canvas id="mch-ratio"></canvas></div></div>
+  </div>
+</div>
+
+<!-- MBA PURCHASE INDEX -->
+<div class="page" id="page-mba">
+  <div class="section-title" style="margin-top:4px;">MBA PURCHASE INDEX - WEEKLY TRACKER</div>
+
+  <!-- ADD NEW READING FORM -->
+  <div class="mba-card" style="border-color:var(--teal);border-style:dashed;">
+    <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:10px;">Add New Reading</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>Release Date</label>
+        <input type="date" id="mba-new-date"/>
+      </div>
+      <div class="input-group">
+        <label>Index Value</label>
+        <input type="number" step="0.1" id="mba-new-val" placeholder="e.g. 171.1"/>
+      </div>
+      <button class="btn-add" onclick="addMbaReading()">Add Reading</button>
+    </div>
+    <div style="color:var(--muted);font-size:9px;">Manually entered readings are saved in your browser and merged with seed data. They persist across sessions.</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+    <div class="mba-card" style="margin-bottom:0;">
+      <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:2px;">Latest Reading</div>
+      <div style="font-size:36px;font-weight:700;color:#fff;margin:6px 0;" id="mba-latest-val">-</div>
+      <div style="display:flex;gap:14px;margin-top:6px;" id="mba-latest-changes"></div>
+      <div style="color:var(--muted);font-size:10px;margin-top:8px;" id="mba-latest-date"></div>
+    </div>
+    <div class="mba-card" style="margin-bottom:0;">
+      <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:10px;">52-Week Range</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="color:var(--muted);font-size:10px;">Low</span>
+        <span style="color:var(--muted);font-size:10px;">High</span>
+      </div>
+      <div style="position:relative;height:8px;background:#1e3a5f;border-radius:4px;margin-bottom:8px;" id="mba-range-bar"></div>
+      <div style="display:flex;justify-content:space-between;">
+        <span id="mba-low" style="font-weight:700;color:var(--red);font-size:14px;">-</span>
+        <span id="mba-high" style="font-weight:700;color:var(--green);font-size:14px;">-</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:20px;">
+    <div class="chart-title">MBA Purchase Index - Full History</div>
+    <div class="chart-wrap" style="height:220px;"><canvas id="mba-chart"></canvas></div>
+  </div>
+
+  <div class="mba-card">
+    <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:12px;">Recent Weekly Readings</div>
+    <table class="mba-table">
+      <thead><tr>
+        <th>Week Ending</th>
+        <th>Purchase Index</th>
+        <th>WoW Change</th>
+        <th>YoY Change</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="mba-tbody"></tbody>
+    </table>
+    <div class="mba-note">Source: Mortgage Bankers Association / Trading Economics alerts</div>
+  </div>
+</div>
+
+<div class="footer">
+  Realtor.com Market Data | Cairn Analytics | Auto-updating |
+  Source: realtor.com/research/data | MBA Weekly Applications Survey
+  <br>Data cached locally via IndexedDB. Last refresh: <span id="footer-refresh">-</span>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const CSV_SOURCES = {
+  us: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Country_History.csv',
+  state: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_State_History.csv',
+  metro: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Metro_History.csv'
+};
+
+const TARGET_STATES = { TX: 'Texas', CO: 'Colorado' };
+const TARGET_METROS = {
+  19100: { short: 'DFW', full: 'Dallas-Fort Worth-Arlington, TX' },
+  26420: { short: 'Houston', full: 'Houston-Pasadena-The Woodlands, TX' },
+  19740: { short: 'Denver', full: 'Denver-Aurora-Centennial, CO' },
+  41700: { short: 'San Antonio', full: 'San Antonio-New Braunfels, TX' },
+  12420: { short: 'Austin', full: 'Austin-Round Rock-San Marcos, TX' },
+  21340: { short: 'El Paso', full: 'El Paso, TX' },
+  17820: { short: 'Colo. Springs', full: 'Colorado Springs, CO' },
+  32580: { short: 'McAllen', full: 'McAllen-Edinburg-Mission, TX' }
+};
+
+const METRO_KEYS = Object.keys(TARGET_METROS);
+const METRO_SHORTS = METRO_KEYS.map(k => TARGET_METROS[k].short);
+const METRO_COLORS = ['#38bdf8','#f87171','#a78bfa','#34d399','#f97316','#facc15','#e879f9','#fb923c'];
+const GEO_MAP = { us: { label: 'UNITED STATES', accent: '#38bdf8' }, TX: { label: 'TEXAS', accent: '#f97316' }, CO: { label: 'COLORADO', accent: '#a78bfa' } };
+
+const FIELDS = ['median_listing_price','active_listing_count','median_days_on_market','new_listing_count','price_reduced_share','pending_listing_count','pending_ratio'];
+const CHANGE_FIELDS = FIELDS.map(f => f + '_yy');
+
+// How many months of history to show in charts
+const CHART_MONTHS = 24;
+
+// ============================================================
+// IndexedDB Cache
+// ============================================================
+const DB_NAME = 'cairn_market_db';
+const DB_VERSION = 2;
+let db;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('csv_cache')) d.createObjectStore('csv_cache');
+      if (!d.objectStoreNames.contains('mba_manual')) d.createObjectStore('mba_manual');
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(db); };
+    req.onerror = e => reject(e);
+  });
+}
+
+function dbPut(store, key, val) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).put(val, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = e => reject(e);
+  });
+}
+
+function dbGet(store, key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = e => reject(e);
+  });
+}
+
+function dbGetAll(store) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = e => reject(e);
+  });
+}
+
+function dbGetAllKeys(store) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAllKeys();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = e => reject(e);
+  });
+}
+
+function dbDelete(store, key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = e => reject(e);
+  });
+}
+
+// ============================================================
+// CSV Fetch + Cache
+// ============================================================
+async function fetchCSV(key, url) {
+  updateStatus(key, 'loading', 'Fetching...');
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const text = await resp.text();
+    // Cache the raw CSV text with timestamp
+    await dbPut('csv_cache', key, { text, ts: Date.now() });
+    updateStatus(key, 'ok', 'Live');
+    return text;
+  } catch (e) {
+    console.warn('Fetch failed for ' + key + ', trying cache:', e.message);
+    const cached = await dbGet('csv_cache', key);
+    if (cached) {
+      updateStatus(key, 'ok', 'Cached ' + new Date(cached.ts).toLocaleDateString());
+      return cached.text;
+    }
+    updateStatus(key, 'err', 'Unavailable');
+    return null;
+  }
+}
+
+function parseCSV(text) {
+  if (!text) return [];
+  const result = Papa.parse(text.trim(), { header: true, skipEmptyLines: true, dynamicTyping: true });
+  return result.data;
+}
+
+// ============================================================
+// Status bar
+// ============================================================
+const statusItems = {};
+function updateStatus(key, state, msg) {
+  statusItems[key] = { state, msg };
+  renderStatus();
+}
+function renderStatus() {
+  const bar = document.getElementById('status-bar');
+  bar.innerHTML = Object.entries(statusItems).map(([k, v]) =>
+    `<span><span class="status-dot ${v.state}"></span>${k}: ${v.msg}</span>`
+  ).join('');
+}
+
+// ============================================================
+// Data Processing
+// ============================================================
+let DATA = {}; // { us: { history: [...], latest: {} }, TX: {...}, CO: {...}, metros: { 19100: {...}, ... } }
+
+function yyyymmToLabel(yyyymm) {
+  const y = Math.floor(yyyymm / 100);
+  const m = yyyymm % 100;
+  const months = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months[m] + ' ' + y;
+}
+
+function processUS(rows) {
+  // Sort by date
+  rows.sort((a, b) => a.month_date_yyyymm - b.month_date_yyyymm);
+  const history = rows.map(r => {
+    const obj = { date: r.month_date_yyyymm, label: yyyymmToLabel(r.month_date_yyyymm) };
+    FIELDS.forEach(f => obj[f] = r[f]);
+    CHANGE_FIELDS.forEach(f => obj[f] = r[f]);
+    return obj;
+  });
+  const latest = history[history.length - 1];
+  DATA.us = { history, latest };
+}
+
+function processStates(rows) {
+  Object.keys(TARGET_STATES).forEach(sid => {
+    const stateRows = rows.filter(r => r.state_id === sid || r.state === TARGET_STATES[sid]);
+    stateRows.sort((a, b) => a.month_date_yyyymm - b.month_date_yyyymm);
+    const history = stateRows.map(r => {
+      const obj = { date: r.month_date_yyyymm, label: yyyymmToLabel(r.month_date_yyyymm) };
+      FIELDS.forEach(f => obj[f] = r[f]);
+      CHANGE_FIELDS.forEach(f => obj[f] = r[f]);
+      return obj;
+    });
+    const latest = history[history.length - 1];
+    DATA[sid] = { history, latest };
+  });
+}
+
+function processMetros(rows) {
+  DATA.metros = {};
+  METRO_KEYS.forEach(code => {
+    const codeNum = parseInt(code);
+    const metroRows = rows.filter(r => r.cbsa_code === codeNum);
+    metroRows.sort((a, b) => a.month_date_yyyymm - b.month_date_yyyymm);
+    const history = metroRows.map(r => {
+      const obj = { date: r.month_date_yyyymm, label: yyyymmToLabel(r.month_date_yyyymm) };
+      FIELDS.forEach(f => obj[f] = r[f]);
+      CHANGE_FIELDS.forEach(f => obj[f] = r[f]);
+      return obj;
+    });
+    const latest = history[history.length - 1];
+    DATA.metros[code] = { history, latest, short: TARGET_METROS[code].short, full: TARGET_METROS[code].full };
+  });
+}
+
+// ============================================================
+// MBA Purchase Index
+// ============================================================
+const MBA_SEED = [[\"9/17/2014\",169.3],[\"9/24/2014\",168.8],[\"10/1/2014\",168.8],[\"10/8/2014\",172.9],[\"10/15/2014\",171.7],[\"10/22/2014\",163.4],[\"10/29/2014\",155.2],[\"11/5/2014\",159.2],[\"11/12/2014\",160.9],[\"11/19/2014\",179.8],[\"11/26/2014\",171.2],[\"12/3/2014\",175.5],[\"12/10/2014\",177.7],[\"12/17/2014\",165.5],[\"12/24/2014\",167.7],[\"1/7/2015\",159.2],[\"1/14/2015\",196.7],[\"1/21/2015\",191.7],[\"1/28/2015\",191.6],[\"2/4/2015\",187.2],[\"2/11/2015\",175.1],[\"2/18/2015\",162.7],[\"2/25/2015\",170.2],[\"3/4/2015\",169.8],[\"3/11/2015\",173.0],[\"3/18/2015\",170.4],[\"3/25/2015\",178.7],[\"4/1/2015\",188.9],[\"4/8/2015\",201.8],[\"4/15/2015\",195.6],[\"4/22/2015\",205.4],[\"4/29/2015\",205.4],[\"5/6/2015\",207.1],[\"5/13/2015\",206.7],[\"5/20/2015\",199.1],[\"5/27/2015\",201.5],[\"6/3/2015\",195.4],[\"6/10/2015\",214.3],[\"6/17/2015\",205.4],[\"6/24/2015\",207.8],[\"7/1/2015\",199.2],[\"7/8/2015\",212.4],[\"7/15/2015\",196.4],[\"7/22/2015\",198.3],[\"7/29/2015\",198.1],[\"8/5/2015\",204.6],[\"8/12/2015\",197.4],[\"8/19/2015\",195.3],[\"8/26/2015\",198.7],[\"9/2/2015\",206.9],[\"9/9/2015\",205.0],[\"9/16/2015\",196.3],[\"9/23/2015\",214.2],[\"9/30/2015\",202.1],[\"10/7/2015\",257.4],[\"10/14/2015\",169.6],[\"10/21/2015\",197.4],[\"10/28/2015\",191.2],[\"11/4/2015\",190.0],[\"11/11/2015\",190.1],[\"11/18/2015\",212.8],[\"11/25/2015\",211.7],[\"12/2/2015\",228.1],[\"12/9/2015\",228.2],[\"12/16/2015\",221.7],[\"12/23/2015\",230.8],[\"1/6/2016\",196.2],[\"1/13/2016\",231.1],[\"1/20/2016\",227.3],[\"1/27/2016\",237.8],[\"2/3/2016\",221.1],[\"2/10/2016\",221.6],[\"2/17/2016\",213.3],[\"2/24/2016\",217.9],[\"3/2/2016\",216.7],[\"3/9/2016\",225.7],[\"3/16/2016\",226.3],[\"3/23/2016\",224.0],[\"3/30/2016\",228.6],[\"4/6/2016\",223.1],[\"4/13/2016\",241.9],[\"4/20/2016\",240.8],[\"4/27/2016\",235.0],[\"5/4/2016\",234.7],[\"5/11/2016\",235.6],[\"5/18/2016\",222.0],[\"5/25/2016\",234.9],[\"6/1/2016\",223.8],[\"6/8/2016\",249.9],[\"6/15/2016\",237.6],[\"6/22/2016\",231.9],[\"6/29/2016\",224.9],[\"7/6/2016\",234.6],[\"7/13/2016\",234.7],[\"7/20/2016\",229.9],[\"7/27/2016\",222.2],[\"8/3/2016\",216.9],[\"8/10/2016\",222.6],[\"8/17/2016\",214.0],[\"8/24/2016\",213.4],[\"8/31/2016\",216.1],[\"9/7/2016\",218.6],[\"9/14/2016\",237.3],[\"9/21/2016\",221.1],[\"9/28/2016\",222.8],[\"10/5/2016\",222.5],[\"10/12/2016\",216.7],[\"10/19/2016\",223.1],[\"10/26/2016\",207.8],[\"11/2/2016\",207.0],[\"11/9/2016\",210.0],[\"11/16/2016\",197.0],[\"11/23/2016\",234.1],[\"11/30/2016\",233.6],[\"12/7/2016\",234.5],[\"12/14/2016\",226.7],[\"12/21/2016\",232.9],[\"1/4/2017\",228.0],[\"1/11/2017\",241.9],[\"1/18/2017\",229.4],[\"1/25/2017\",243.2],[\"2/1/2017\",229.6],[\"2/8/2017\",233.7],[\"2/15/2017\",223.1],[\"2/22/2017\",216.9],[\"3/1/2017\",231.0],[\"3/8/2017\",235.0],[\"3/15/2017\",240.3],[\"3/22/2017\",235.3],[\"3/29/2017\",238.1],[\"4/5/2017\",239.8],[\"4/12/2017\",246.7],[\"4/19/2017\",238.3],[\"4/26/2017\",236.0],[\"5/3/2017\",246.0],[\"5/10/2017\",250.3],[\"5/17/2017\",243.6],[\"5/24/2017\",241.6],[\"5/31/2017\",238.1],[\"6/7/2017\",261.9],[\"6/14/2017\",254.6],[\"6/21/2017\",252.1],[\"6/28/2017\",241.7],[\"7/6/2017\",249.1],[\"7/12/2017\",242.8],[\"7/19/2017\",245.5],[\"7/26/2017\",240.1],[\"8/2/2017\",235.4],[\"8/9/2017\",237.3],[\"8/16/2017\",233.8],[\"8/23/2017\",230.4],[\"8/30/2017\",224.1],[\"9/6/2017\",227.3],[\"9/13/2017\",252.0],[\"9/20/2017\",224.7],[\"9/27/2017\",231.0],[\"10/4/2017\",233.4],[\"10/11/2017\",233.2],[\"10/18/2017\",242.9],[\"10/25/2017\",228.0],[\"11/1/2017\",226.1],[\"11/8/2017\",227.2],[\"11/15/2017\",228.2],[\"11/22/2017\",240.4],[\"11/29/2017\",244.7],[\"12/6/2017\",250.6],[\"12/13/2017\",247.9],[\"12/20/2017\",234.3],[\"1/3/2018\",236.9],[\"1/10/2018\",242.7],[\"1/17/2018\",249.2],[\"1/24/2018\",264.4],[\"1/31/2018\",255.5],[\"2/7/2018\",255.4],[\"2/14/2018\",240.4],[\"2/21/2018\",225.5],[\"2/28/2018\",239.4],[\"3/7/2018\",238.3],[\"3/14/2018\",246.5],[\"3/21/2018\",249.9],[\"3/28/2018\",257.6],[\"4/4/2018\",252.3],[\"4/11/2018\",247.3],[\"4/18/2018\",262.4],[\"4/25/2018\",262.4],[\"5/2/2018\",258.1],[\"5/9/2018\",257.7],[\"5/16/2018\",252.4],[\"5/23/2018\",247.4],[\"5/30/2018\",242.7],[\"6/6/2018\",252.8],[\"6/13/2018\",249.0],[\"6/20/2018\",259.6],[\"6/27/2018\",244.3],[\"7/4/2018\",245.5],[\"7/11/2018\",261.5],[\"7/18/2018\",247.9],[\"7/25/2018\",245.5],[\"8/1/2018\",237.9],[\"8/8/2018\",233.1],[\"8/15/2018\",225.5],[\"8/22/2018\",232.1],[\"8/29/2018\",230.1],[\"9/5/2018\",231.4],[\"9/12/2018\",233.5],[\"9/19/2018\",234.2],[\"9/26/2018\",240.4],[\"10/3/2018\",240.7],[\"10/10/2018\",238.0],[\"10/17/2018\",224.0],[\"10/24/2018\",228.4],[\"10/31/2018\",224.9],[\"11/7/2018\",213.6],[\"11/14/2018\",220.8],[\"11/21/2018\",227.7],[\"11/28/2018\",247.8],[\"12/5/2018\",249.9],[\"12/12/2018\",256.1],[\"12/19/2018\",238.6],[\"1/3/2019\",219.0],[\"1/9/2019\",255.2],[\"1/16/2019\",278.5],[\"1/23/2019\",272.5],[\"1/30/2019\",266.2],[\"2/6/2019\",253.1],[\"2/13/2019\",237.7],[\"2/20/2019\",232.7],[\"2/27/2019\",247.0],[\"3/6/2019\",240.5],[\"3/13/2019\",250.8],[\"3/20/2019\",251.5],[\"3/27/2019\",267.5],[\"4/3/2019\",276.6],[\"4/10/2019\",278.1],[\"4/17/2019\",280.7],[\"4/24/2019\",269.3],[\"5/1/2019\",259.4],[\"5/8/2019\",270.2],[\"5/15/2019\",268.5],[\"5/22/2019\",263.0],[\"5/29/2019\",259.4],[\"6/5/2019\",253.1],[\"6/12/2019\",278.4],[\"6/19/2019\",268.6],[\"6/26/2019\",266.3],[\"7/3/2019\",269.3],[\"7/10/2019\",275.6],[\"7/17/2019\",265.1],[\"7/24/2019\",260.8],[\"7/31/2019\",253.0],[\"8/7/2019\",247.9],[\"8/14/2019\",252.6],[\"8/21/2019\",243.8],[\"8/28/2019\",234.1],[\"9/4/2019\",242.6],[\"9/11/2019\",253.5],[\"9/18/2019\",269.7],[\"9/25/2019\",261.4],[\"10/2/2019\",263.8],[\"10/9/2019\",252.2],[\"10/16/2019\",250.6],[\"10/23/2019\",241.7],[\"10/30/2019\",247.2],[\"11/6/2019\",241.0],[\"11/13/2019\",253.4],[\"11/20/2019\",270.4],[\"11/27/2019\",267.1],[\"12/4/2019\",269.4],[\"12/11/2019\",268.3],[\"12/18/2019\",262.6],[\"12/26/2019\",250.1],[\"1/8/2020\",263.2],[\"1/15/2020\",303.9],[\"1/22/2020\",297.8],[\"1/29/2020\",313.7],[\"2/5/2020\",283.8],[\"2/12/2020\",267.4],[\"2/19/2020\",258.4],[\"2/26/2020\",273.1],[\"3/4/2020\",265.8],[\"3/11/2020\",280.7],[\"3/18/2020\",278.1],[\"3/25/2020\",237.4],[\"4/1/2020\",211.7],[\"4/8/2020\",185.9],[\"4/15/2020\",182.6],[\"4/22/2020\",186.4],[\"4/29/2020\",208.0],[\"5/6/2020\",220.0],[\"5/13/2020\",243.3],[\"5/20/2020\",258.9],[\"5/27/2020\",281.2],[\"6/3/2020\",296.0],[\"6/10/2020\",311.7],[\"6/17/2020\",322.5],[\"6/24/2020\",312.7],[\"7/1/2020\",308.7],[\"7/8/2020\",325.2],[\"7/15/2020\",305.4],[\"7/22/2020\",310.9],[\"7/29/2020\",306.1],[\"8/5/2020\",300.7],[\"8/12/2020\",306.6],[\"8/19/2020\",308.9],[\"8/26/2020\",310.2],[\"9/2/2020\",309.6],[\"9/9/2020\",317.7],[\"9/16/2020\",316.2],[\"9/23/2020\",327.0],[\"9/30/2020\",320.9],[\"10/7/2020\",316.0],[\"10/14/2020\",311.1],[\"10/21/2020\",304.6],[\"10/28/2020\",305.2],[\"11/4/2020\",301.2],[\"11/11/2020\",293.5],[\"11/18/2020\",303.9],[\"11/25/2020\",314.6],[\"12/2/2020\",342.9],[\"12/9/2020\",325.7],[\"12/16/2020\",331.6],[\"12/23/2020\",316.3],[\"1/6/2021\",313.8],[\"1/13/2021\",338.9],[\"1/20/2021\",348.2],[\"1/27/2021\",334.2],[\"2/3/2021\",334.6],[\"2/10/2021\",318.8],[\"2/17/2021\",299.5],[\"2/24/2021\",264.9],[\"3/3/2021\",269.7],[\"3/10/2021\",289.0],[\"3/17/2021\",294.3],[\"3/24/2021\",301.9],[\"3/31/2021\",297.3],[\"4/7/2021\",283.6],[\"4/14/2021\",279.5],[\"4/21/2021\",295.5],[\"4/28/2021\",281.4],[\"5/5/2021\",274.5],[\"5/12/2021\",276.7],[\"5/19/2021\",265.3],[\"5/26/2021\",269.8],[\"6/2/2021\",261.4],[\"6/9/2021\",262.1],[\"6/16/2021\",266.3],[\"6/23/2021\",268.0],[\"6/30/2021\",255.2],[\"7/7/2021\",252.4],[\"7/14/2021\",273.3],[\"7/21/2021\",255.8],[\"7/28/2021\",251.7],[\"8/4/2021\",247.5],[\"8/11/2021\",252.0],[\"8/18/2021\",249.9],[\"8/25/2021\",257.5],[\"9/1/2021\",259.0],[\"9/8/2021\",258.4],[\"9/15/2021\",277.9],[\"9/22/2021\",283.9],[\"9/29/2021\",280.4],[\"10/6/2021\",275.7],[\"10/13/2021\",279.8],[\"10/20/2021\",266.2],[\"10/27/2021\",275.6],[\"11/3/2021\",271.1],[\"11/10/2021\",278.4],[\"11/17/2021\",282.5],[\"11/24/2021\",295.7],[\"12/1/2021\",310.7],[\"12/8/2021\",295.2],[\"12/15/2021\",297.2],[\"12/22/2021\",287.5],[\"1/5/2022\",277.3],[\"1/12/2022\",283.4],[\"1/19/2022\",305.7],[\"1/26/2022\",300.1],[\"2/2/2022\",312.2],[\"2/9/2022\",282.3],[\"2/16/2022\",279.0],[\"2/23/2022\",250.7],[\"3/2/2022\",246.3],[\"3/9/2022\",267.6],[\"3/16/2022\",269.5],[\"3/23/2022\",265.4],[\"3/30/2022\",267.1],[\"4/6/2022\",258.1],[\"4/13/2022\",261.8],[\"4/20/2022\",254.0],[\"4/27/2022\",234.7],[\"5/4/2022\",244.4],[\"5/11/2022\",255.4],[\"5/18/2022\",225.0],[\"5/25/2022\",225.5],[\"6/1/2022\",224.1],[\"6/8/2022\",208.2],[\"6/15/2022\",225.0],[\"6/22/2022\",242.8],[\"6/29/2022\",243.1],[\"7/6/2022\",232.6],[\"7/13/2022\",224.3],[\"7/20/2022\",208.0],[\"7/27/2022\",206.4],[\"8/3/2022\",208.4],[\"8/10/2022\",205.4],[\"8/17/2022\",203.8],[\"8/24/2022\",202.8],[\"8/31/2022\",199.1],[\"9/7/2022\",197.8],[\"9/14/2022\",198.1],[\"9/21/2022\",200.1],[\"9/28/2022\",199.3],[\"10/5/2022\",174.1],[\"10/12/2022\",170.5],[\"10/19/2022\",164.2],[\"10/26/2022\",160.4],[\"11/2/2022\",160.5],[\"11/9/2022\",162.6],[\"11/16/2022\",169.7],[\"11/23/2022\",174.4],[\"11/30/2022\",181.0],[\"12/7/2022\",175.5],[\"12/14/2022\",182.6],[\"12/21/2022\",182.5],[\"1/4/2023\",160.2],[\"1/11/2023\",159.4],[\"1/18/2023\",198.7],[\"1/25/2023\",205.4],[\"2/1/2023\",184.3],[\"2/8/2023\",190.0],[\"2/15/2023\",179.6],[\"2/22/2023\",147.1],[\"3/1/2023\",138.8],[\"3/8/2023\",154.4],[\"3/15/2023\",165.6],[\"3/22/2023\",169.3],[\"3/29/2023\",172.7],[\"4/5/2023\",166.6],[\"4/12/2023\",179.6],[\"4/19/2023\",161.6],[\"4/26/2023\",169.1],[\"5/3/2023\",165.8],[\"5/10/2023\",173.7],[\"5/17/2023\",165.4],[\"5/24/2023\",158.3],[\"5/31/2023\",154.4],[\"6/7/2023\",151.7],[\"6/14/2023\",163.2],[\"6/21/2023\",165.6],[\"6/28/2023\",170.3],[\"7/6/2023\",162.4],[\"7/12/2023\",165.3],[\"7/19/2023\",163.2],[\"7/26/2023\",159.2],[\"8/2/2023\",154.1],[\"8/9/2023\",149.9],[\"8/16/2023\",149.5],[\"8/23/2023\",142.0],[\"8/30/2023\",144.9],[\"9/6/2023\",141.9],[\"9/13/2023\",143.7],[\"9/20/2023\",147.0],[\"9/27/2023\",144.8],[\"10/4/2023\",136.6],[\"10/11/2023\",137.5],[\"10/18/2023\",129.8],[\"10/25/2023\",127.0],[\"11/1/2023\",125.2],[\"11/8/2023\",129.0],[\"11/15/2023\",133.2],[\"11/22/2023\",138.4],[\"11/29/2023\",144.9],[\"12/6/2023\",144.5],[\"12/13/2023\",149.6],[\"12/20/2023\",148.7],[\"1/3/2024\",140.7],[\"1/10/2024\",148.6],[\"1/17/2024\",162.2],[\"1/24/2024\",174.3],[\"1/31/2024\",154.5],[\"2/7/2024\",153.5],[\"2/14/2024\",149.6],[\"2/21/2024\",133.6],[\"2/28/2024\",127.6],[\"3/6/2024\",141.1],[\"3/13/2024\",147.7],[\"3/20/2024\",146.0],[\"3/27/2024\",145.7],[\"4/3/2024\",145.6],[\"4/10/2024\",138.7],[\"4/17/2024\",145.6],[\"4/24/2024\",144.2],[\"5/1/2024\",141.7],[\"5/8/2024\",144.2],[\"5/15/2024\",141.7],[\"5/22/2024\",140.0],[\"5/29/2024\",138.4],[\"6/5/2024\",132.3],[\"6/12/2024\",143.7],[\"6/19/2024\",146.0],[\"6/26/2024\",147.8],[\"7/3/2024\",142.9],[\"7/10/2024\",144.3],[\"7/17/2024\",140.4],[\"7/24/2024\",134.8],[\"7/31/2024\",132.8],[\"8/7/2024\",133.9],[\"8/14/2024\",137.7],[\"8/21/2024\",130.6],[\"8/28/2024\",131.8],[\"9/4/2024\",136.1],[\"9/11/2024\",138.6],[\"9/18/2024\",146.1],[\"9/25/2024\",148.2],[\"10/2/2024\",149.3],[\"10/9/2024\",149.2],[\"10/16/2024\",138.4],[\"10/23/2024\",131.3],[\"10/30/2024\",137.8],[\"11/6/2024\",130.8],[\"11/13/2024\",133.3],[\"11/20/2024\",136.0],[\"11/27/2024\",152.9],[\"12/4/2024\",161.5],[\"12/11/2024\",154.9],[\"12/18/2024\",157.1],[\"1/2/2025\",136.7],[\"1/8/2025\",127.7],[\"1/15/2025\",162.0],[\"1/22/2025\",163.0],[\"1/29/2025\",162.4],[\"2/5/2025\",156.7],[\"2/12/2025\",153.1],[\"2/19/2025\",144.0],[\"2/26/2025\",144.3],[\"3/5/2025\",144.5],[\"3/12/2025\",154.6],[\"3/19/2025\",154.7],[\"3/26/2025\",155.8],[\"4/2/2025\",158.2],[\"4/9/2025\",172.7],[\"4/16/2025\",164.2],[\"4/23/2025\",153.4],[\"4/30/2025\",146.6],[\"5/7/2025\",162.8],[\"5/14/2025\",166.5],[\"5/21/2025\",157.8],[\"5/28/2025\",162.1],[\"6/4/2025\",155.0],[\"6/11/2025\",170.9],[\"6/18/2025\",165.8],[\"6/25/2025\",165.2],[\"7/2/2025\",165.3],[\"7/9/2025\",180.9],[\"7/16/2025\",159.6],[\"7/23/2025\",165.1],[\"7/30/2025\",155.6],[\"8/6/2025\",158.0],[\"8/13/2025\",160.2],[\"8/20/2025\",160.3],[\"8/27/2025\",163.8],[\"9/3/2025\",158.7],[\"9/10/2025\",169.1],[\"9/17/2025\",174.0],[\"9/24/2025\",174.5],[\"10/1/2025\",172.7],[\"10/8/2025\",170.6],[\"10/15/2025\",166.0],[\"10/22/2025\",157.3],[\"10/29/2025\",164.3],[\"11/5/2025\",163.3],[\"11/12/2025\",172.7],[\"11/19/2025\",168.7],[\"11/26/2025\",181.6],[\"12/3/2025\",186.1],[\"12/10/2025\",181.6],[\"12/17/2025\",176.5],[\"12/24/2025\",169.9],[\"1/7/2026\",159.3],[\"1/14/2026\",184.6],[\"1/21/2026\",194.1],[\"1/28/2026\",193.3],[\"2/4/2026\",165.4],[\"2/11/2026\",161.5],[\"2/18/2026\",157.1],[\"2/25/2026\",149.7],[\"3/4/2026\",158.9],[\"3/11/2026\",171.3],[\"3/18/2026\",172.9],[\"3/25/2026\",163.6],[\"4/1/2026\",159.4],[\"4/8/2026\",161.1],[\"4/15/2026\",159.5],[\"4/22/2026\",175.6],[\"4/29/2026\",177.7],[\"5/6/2026\",171.1]];
+
+let mbaData = []; // merged seed + manual, sorted by date asc
+
+function parseMbaDate(s) {
+  const parts = s.split('/');
+  return new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
+}
+
+function fmtMbaDate(d) {
+  return (d.getMonth()+1) + '/' + d.getDate() + '/' + d.getFullYear();
+}
+
+async function loadMbaData() {
+  // Build map from seed
+  const map = new Map();
+  MBA_SEED.forEach(([d, v]) => map.set(d, { date: d, val: v, manual: false }));
+
+  // Overlay manual entries from IndexedDB
+  try {
+    const keys = await dbGetAllKeys('mba_manual');
+    for (const k of keys) {
+      const v = await dbGet('mba_manual', k);
+      if (v != null) map.set(k, { date: k, val: v, manual: true });
+    }
+  } catch(e) { console.warn('MBA manual load error', e); }
+
+  // Sort by date
+  mbaData = Array.from(map.values());
+  mbaData.sort((a, b) => parseMbaDate(a.date) - parseMbaDate(b.date));
+
+  // Compute WoW and YoY
+  for (let i = 0; i < mbaData.length; i++) {
+    if (i > 0) {
+      mbaData[i].wow = +((mbaData[i].val - mbaData[i-1].val) / mbaData[i-1].val * 100).toFixed(1);
+    }
+    // Find ~52 weeks back
+    const targetDate = new Date(parseMbaDate(mbaData[i].date));
+    targetDate.setDate(targetDate.getDate() - 364);
+    let closest = null, closestDiff = Infinity;
+    for (let j = 0; j < i; j++) {
+      const diff = Math.abs(parseMbaDate(mbaData[j].date) - targetDate);
+      if (diff < closestDiff && diff < 14 * 86400000) { closestDiff = diff; closest = mbaData[j]; }
+    }
+    if (closest) {
+      mbaData[i].yoy = +((mbaData[i].val - closest.val) / closest.val * 100).toFixed(1);
+    }
+  }
+}
+
+async function addMbaReading() {
+  const dateInput = document.getElementById('mba-new-date');
+  const valInput = document.getElementById('mba-new-val');
+  const dateVal = dateInput.value;
+  const numVal = parseFloat(valInput.value);
+
+  if (!dateVal || isNaN(numVal)) { showToast('Please enter both date and value'); return; }
+
+  const d = new Date(dateVal + 'T00:00:00');
+  const key = fmtMbaDate(d);
+
+  await dbPut('mba_manual', key, numVal);
+  await loadMbaData();
+  renderMba();
+  dateInput.value = '';
+  valInput.value = '';
+  showToast('Added: ' + key + ' = ' + numVal);
+}
+
+async function deleteMbaReading(dateKey) {
+  // Only delete manual entries
+  await dbDelete('mba_manual', dateKey);
+  await loadMbaData();
+  renderMba();
+  showToast('Deleted: ' + dateKey);
+}
+
+// ============================================================
+// Formatting Helpers
+// ============================================================
+const fmtD = v => v == null ? 'N/A' : '$' + Math.round(v).toLocaleString();
+const fmtN = v => v == null ? 'N/A' : Math.round(v).toLocaleString();
+const fmtP = v => v == null ? 'N/A' : (v * 100).toFixed(1) + '%';
+const fmtYoy = v => v == null ? '' : (v > 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
+const yoyClass = v => v == null ? 'neu' : v > 0 ? 'pos' : 'neg';
+
+// ============================================================
+// Chart Helpers
+// ============================================================
+const charts = {};
+
+function mkChart(id, labels, dataset, isDollar, isPct, isRatio) {
+  if (charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [dataset] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b', borderColor: '#334155', borderWidth: 1 } },
+      scales: {
+        x: { grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 8, maxRotation: 45, font: { size: 9 } } },
+        y: { grid: { color: '#1e3a5f' }, ticks: {
+          font: { size: 9 },
+          callback: v => isDollar ? '$' + (v/1000).toFixed(0) + 'k' : isPct ? (v*100).toFixed(0)+'%' : isRatio ? v.toFixed(2) : v.toLocaleString()
+        }}
+      }
+    }
+  });
+}
+
+function ds(data, color, fill) {
+  return { data, borderColor: color, backgroundColor: fill !== false ? color + '22' : 'transparent', fill: fill !== false, tension: .35, pointRadius: 1.5, pointHoverRadius: 5, borderWidth: 2 };
+}
+
+// ============================================================
+// KPI Card Builder
+// ============================================================
+function kpiCard(k) {
+  const yoyStr = k.yoyStr != null ? k.yoyStr : fmtYoy(k.yoy);
+  const yoyCls = k.yoyCls || yoyClass(k.yoy);
+  const momStr = k.momStr != null ? k.momStr : (k.mom != null ? (k.mom >= 0 ? '+' : '') + (k.mom * 100).toFixed(1) + '%' : '');
+  const momCls = k.momCls || (k.mom > 0 ? 'pos' : k.mom < 0 ? 'neg' : 'neu');
+  return `<div class="kpi-card" style="--accent:${k.accent||'var(--teal)'}">
+    <div class="kpi-label">${k.label}</div>
+    <div class="kpi-value">${k.val}</div>
+    <div class="kpi-changes">
+      <div class="kpi-row"><span class="kpi-row-lbl">YoY</span><span class="${yoyCls}">${yoyStr}</span>${k.yoyPrev?`<span class="kpi-row-prev">(was ${k.yoyPrev})</span>`:''}</div>
+      <div class="kpi-row"><span class="kpi-row-lbl">MoM</span><span class="${momCls}">${momStr}</span>${k.momPrev?`<span class="kpi-row-prev">(was ${k.momPrev})</span>`:''}</div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// Render Functions
+// ============================================================
+let currentGeo = 'us';
+
+function renderGeoButtons() {
+  const geos = [{ key: 'us', label: 'United States' }, { key: 'TX', label: 'Texas' }, { key: 'CO', label: 'Colorado' }];
+  document.getElementById('geo-btns').innerHTML = geos.map(g =>
+    `<button class="geo-btn ${g.key === currentGeo ? 'active' : ''}" onclick="selectGeo('${g.key}',this)">${g.label}</button>`
+  ).join('');
+}
+
+function selectGeo(geo, btn) {
+  currentGeo = geo;
+  document.querySelectorAll('#geo-btns .geo-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderOverview(geo);
+}
+
+function renderOverview(geo) {
+  const d = DATA[geo];
+  if (!d || !d.latest) return;
+  const g = GEO_MAP[geo] || GEO_MAP.us;
+  document.getElementById('geo-label').textContent = g.label;
+
+  const h = d.history;
+  const n = h.length;
+  const latest = h[n - 1];
+  const prev = n > 1 ? h[n - 2] : null;
+  const prevYr = n > 12 ? h[n - 13] : null;
+
+  const mom = (field) => prev ? (latest[field] - prev[field]) / (prev[field] || 1) : null;
+
+  const kpis = [
+    { label: 'Median List Price', val: fmtD(latest.median_listing_price), yoy: latest.median_listing_price_yy, mom: mom('median_listing_price'), yoyPrev: prevYr ? fmtD(prevYr.median_listing_price) : '', momPrev: prev ? fmtD(prev.median_listing_price) : '', accent: g.accent },
+    { label: 'Active Listings', val: fmtN(latest.active_listing_count), yoy: latest.active_listing_count_yy, mom: mom('active_listing_count'), yoyPrev: prevYr ? fmtN(prevYr.active_listing_count) : '', momPrev: prev ? fmtN(prev.active_listing_count) : '', accent: '#34d399' },
+    { label: 'New Listings', val: fmtN(latest.new_listing_count), yoy: latest.new_listing_count_yy, mom: mom('new_listing_count'), yoyPrev: prevYr ? fmtN(prevYr.new_listing_count) : '', momPrev: prev ? fmtN(prev.new_listing_count) : '', accent: '#a78bfa' },
+    { label: 'Days on Market', val: latest.median_days_on_market, yoy: latest.median_days_on_market_yy, mom: mom('median_days_on_market'), yoyPrev: prevYr ? prevYr.median_days_on_market : '', momPrev: prev ? prev.median_days_on_market : '', accent: '#f97316' },
+    { label: 'Pending Ratio', val: fmtP(latest.pending_ratio), yoy: latest.pending_ratio_yy, mom: mom('pending_ratio'), yoyPrev: prevYr ? fmtP(prevYr.pending_ratio) : '', momPrev: prev ? fmtP(prev.pending_ratio) : '', accent: '#facc15' },
+  ];
+  document.getElementById('kpi-grid').innerHTML = kpis.map(k => kpiCard(k)).join('');
+
+  // Charts - last CHART_MONTHS months
+  const slice = h.slice(-CHART_MONTHS);
+  const labels = slice.map(r => r.label);
+  mkChart('ch-price', labels, ds(slice.map(r => r.median_listing_price), g.accent), true);
+  mkChart('ch-active', labels, ds(slice.map(r => r.active_listing_count), '#34d399', false));
+  mkChart('ch-new', labels, ds(slice.map(r => r.new_listing_count), '#a78bfa', false));
+  mkChart('ch-dom', labels, ds(slice.map(r => r.median_days_on_market), '#f97316', false));
+}
+
+function renderMetroTable() {
+  const latestDate = DATA.us?.latest?.date;
+  if (latestDate) {
+    document.getElementById('metro-snap-title').textContent = 'METRO SNAPSHOT - ' + yyyymmToLabel(latestDate).toUpperCase();
+  }
+
+  document.getElementById('metro-tbody').innerHTML = METRO_KEYS.map((code, i) => {
+    const m = DATA.metros?.[code];
+    if (!m || !m.latest) return '';
+    const d = m.latest;
+    const color = METRO_COLORS[i];
+    const ratioYoyClass = yoyClass(d.pending_ratio_yy);
+    const ratioYoyStr = d.pending_ratio_yy != null ? (d.pending_ratio_yy > 0 ? '+' : '') + (d.pending_ratio_yy * 100).toFixed(1) + 'pp' : '';
+    return `<tr>
+      <td style="border-left:3px solid ${color}">${m.full}</td>
+      <td>${fmtD(d.median_listing_price)}</td><td class="yoy-cell ${yoyClass(d.median_listing_price_yy)}">${fmtYoy(d.median_listing_price_yy)}</td>
+      <td>${fmtN(d.active_listing_count)}</td><td class="yoy-cell ${yoyClass(d.active_listing_count_yy)}">${fmtYoy(d.active_listing_count_yy)}</td>
+      <td>${fmtN(d.new_listing_count)}</td><td class="yoy-cell ${yoyClass(d.new_listing_count_yy)}">${fmtYoy(d.new_listing_count_yy)}</td>
+      <td>${d.median_days_on_market ?? 'N/A'}</td><td class="yoy-cell ${yoyClass(d.median_days_on_market_yy)}">${fmtYoy(d.median_days_on_market_yy)}</td>
+      <td>${fmtP(d.price_reduced_share)}</td><td class="yoy-cell ${yoyClass(d.price_reduced_share_yy)}">${fmtYoy(d.price_reduced_share_yy)}</td>
+      <td>${fmtN(d.pending_listing_count)}</td><td class="yoy-cell ${yoyClass(d.pending_listing_count_yy)}">${fmtYoy(d.pending_listing_count_yy)}</td>
+      <td>${fmtP(d.pending_ratio)}</td><td class="yoy-cell ${ratioYoyClass}">${ratioYoyStr}</td>
+    </tr>`;
+  }).join('');
+}
+
+let currentMetro = METRO_KEYS[0];
+
+function buildMetroButtons() {
+  document.getElementById('metro-btns').innerHTML = METRO_KEYS.map((code, i) => {
+    const active = code === currentMetro;
+    const style = active ? `background:${METRO_COLORS[i]};color:#0f172a;border-color:${METRO_COLORS[i]}` : '';
+    return `<button class="geo-btn ${active ? 'active' : ''}" style="${style}" onclick="selectMetro('${code}',this,${i})">${TARGET_METROS[code].short}</button>`;
+  }).join('');
+}
+
+function selectMetro(code, btn, idx) {
+  currentMetro = code;
+  document.querySelectorAll('#metro-btns .geo-btn').forEach(b => { b.classList.remove('active'); b.style.background = ''; b.style.color = ''; b.style.borderColor = ''; });
+  btn.classList.add('active'); btn.style.background = METRO_COLORS[idx]; btn.style.color = '#0f172a'; btn.style.borderColor = METRO_COLORS[idx];
+  renderMetroTrends(code);
+}
+
+function renderMetroTrends(code) {
+  const m = DATA.metros?.[code];
+  if (!m || !m.history.length) return;
+  const idx = METRO_KEYS.indexOf(code);
+  const color = METRO_COLORS[idx] || '#38bdf8';
+  document.getElementById('metro-trend-label').textContent = m.full;
+
+  const h = m.history;
+  const n = h.length;
+  const latest = h[n - 1];
+  const prev = n > 1 ? h[n - 2] : null;
+  const prevYr = n > 12 ? h[n - 13] : null;
+  const mom = (field) => prev && prev[field] ? (latest[field] - prev[field]) / prev[field] : null;
+
+  const kpis = [
+    { label: 'Median List Price', val: fmtD(latest.median_listing_price), yoy: latest.median_listing_price_yy, mom: mom('median_listing_price'), yoyPrev: prevYr ? fmtD(prevYr.median_listing_price) : '', momPrev: prev ? fmtD(prev.median_listing_price) : '', accent: color },
+    { label: 'Active Listings', val: fmtN(latest.active_listing_count), yoy: latest.active_listing_count_yy, mom: mom('active_listing_count'), yoyPrev: prevYr ? fmtN(prevYr.active_listing_count) : '', momPrev: prev ? fmtN(prev.active_listing_count) : '', accent: '#34d399' },
+    { label: 'New Listings', val: fmtN(latest.new_listing_count), yoy: latest.new_listing_count_yy, mom: mom('new_listing_count'), yoyPrev: prevYr ? fmtN(prevYr.new_listing_count) : '', momPrev: prev ? fmtN(prev.new_listing_count) : '', accent: '#a78bfa' },
+    { label: 'Days on Market', val: latest.median_days_on_market, yoy: latest.median_days_on_market_yy, mom: mom('median_days_on_market'), yoyPrev: prevYr ? prevYr.median_days_on_market : '', momPrev: prev ? prev.median_days_on_market : '', accent: '#f97316' },
+    { label: 'Pending Ratio', val: fmtP(latest.pending_ratio), yoy: latest.pending_ratio_yy, mom: mom('pending_ratio'), yoyPrev: prevYr ? fmtP(prevYr.pending_ratio) : '', momPrev: prev ? fmtP(prev.pending_ratio) : '', accent: '#facc15' },
+  ];
+  document.getElementById('metro-kpi-grid').innerHTML = kpis.map(k => kpiCard(k)).join('');
+
+  const slice = h.slice(-CHART_MONTHS);
+  const labels = slice.map(r => r.label);
+  mkChart('mch-price', labels, ds(slice.map(r => r.median_listing_price), color), true);
+  mkChart('mch-active', labels, ds(slice.map(r => r.active_listing_count), '#34d399', false));
+  mkChart('mch-new', labels, ds(slice.map(r => r.new_listing_count), '#a78bfa', false));
+  mkChart('mch-dom', labels, ds(slice.map(r => r.median_days_on_market), '#f97316', false));
+  mkChart('mch-pct', labels, ds(slice.map(r => r.price_reduced_share), '#f43f5e', false), false, true);
+  mkChart('mch-pending', labels, ds(slice.map(r => r.pending_listing_count), '#facc15', false));
+  mkChart('mch-ratio', labels, ds(slice.map(r => r.pending_ratio), '#e879f9', false), false, false, true);
+}
+
+function renderMba() {
+  if (!mbaData.length) return;
+
+  const last = mbaData[mbaData.length - 1];
+  document.getElementById('mba-latest-val').textContent = last.val.toFixed(1);
+  document.getElementById('mba-latest-date').textContent = 'Week ending ' + last.date + ' | Source: Mortgage Bankers Association';
+
+  let chHtml = '';
+  if (last.wow != null) { const cls = last.wow >= 0 ? 'pos' : 'neg'; chHtml += `<span><span style="color:var(--muted);font-size:10px;">WoW</span><br><span class="${cls}" style="font-weight:700;font-size:14px;">${last.wow >= 0 ? '+' : ''}${last.wow}%</span></span>`; }
+  if (last.yoy != null) { const cls = last.yoy >= 0 ? 'pos' : 'neg'; chHtml += `<span><span style="color:var(--muted);font-size:10px;">YoY</span><br><span class="${cls}" style="font-weight:700;font-size:14px;">${last.yoy >= 0 ? '+' : ''}${last.yoy}%</span></span>`; }
+  document.getElementById('mba-latest-changes').innerHTML = chHtml;
+
+  // 52-week range
+  const last52 = mbaData.slice(-52).map(r => r.val);
+  const lo = Math.min(...last52), hi = Math.max(...last52);
+  document.getElementById('mba-low').textContent = lo.toFixed(1);
+  document.getElementById('mba-high').textContent = hi.toFixed(1);
+  const pct = ((last.val - lo) / (hi - lo) * 100).toFixed(0);
+  document.getElementById('mba-range-bar').innerHTML = `<div style="position:absolute;left:0;top:0;height:100%;width:${pct}%;background:linear-gradient(90deg,#1e3a5f,#38bdf8);border-radius:4px;"></div><div style="position:absolute;top:-3px;left:calc(${pct}% - 6px);width:12px;height:14px;background:#38bdf8;border-radius:3px;"></div>`;
+
+  // Chart
+  const labels = mbaData.map(r => r.date);
+  const vals = mbaData.map(r => r.val);
+  if (charts['mba-chart']) charts['mba-chart'].destroy();
+  const ctx = document.getElementById('mba-chart');
+  if (ctx) {
+    charts['mba-chart'] = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets: [
+        { data: vals, borderColor: '#38bdf8', backgroundColor: '#38bdf822', fill: true, tension: .35, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2, label: 'Index' },
+        { data: Array(vals.length).fill(last.val), borderColor: '#f87171', backgroundColor: 'transparent', fill: false, tension: 0, pointRadius: 0, borderWidth: 1.5, borderDash: [6, 4], label: 'Latest (' + last.val + ')' }
+      ] },
+      options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: true, labels: { boxWidth: 20, padding: 14, color: '#94a3b8', font: { size: 10 }, filter: i => i.datasetIndex === 1 } } },
+        scales: { x: { grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 12, maxRotation: 45, font: { size: 9 } } }, y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 } } } }
+      }
+    });
+  }
+
+  // Table - last 25 readings
+  const recent = mbaData.slice(-25).reverse();
+  document.getElementById('mba-tbody').innerHTML = recent.map(r => {
+    const wowHtml = r.wow != null ? `<span class="stat-badge ${r.wow >= 0 ? 'pos' : 'neg'}">${r.wow >= 0 ? '+' : ''}${r.wow}%</span>` : '<span style="color:var(--muted);">-</span>';
+    const yoyHtml = r.yoy != null ? `<span class="stat-badge ${r.yoy >= 0 ? 'pos' : 'neg'}">${r.yoy >= 0 ? '+' : ''}${r.yoy}%</span>` : '<span style="color:var(--muted);">-</span>';
+    const delBtn = r.manual ? `<button class="btn-del" onclick="deleteMbaReading('${r.date}')">Remove</button>` : '';
+    const manualBadge = r.manual ? ' <span style="color:var(--teal);font-size:8px;font-weight:700;">MANUAL</span>' : '';
+    return `<tr><td>${r.date}${manualBadge}</td><td><strong>${r.val.toFixed(1)}</strong></td><td>${wowHtml}</td><td>${yoyHtml}</td><td>${delBtn}</td></tr>`;
+  }).join('');
+}
+
+// ============================================================
+// Page Navigation
+// ============================================================
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'trends') renderMetroTrends(currentMetro);
+  if (name === 'mba') setTimeout(() => renderMba(), 50);
+}
+
+// ============================================================
+// Toast
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  const loadMsg = document.getElementById('loading-msg');
+
+  try {
+    await openDB();
+
+    // Fetch all CSVs in parallel
+    loadMsg.textContent = 'Fetching national data...';
+    const [usText, stateText, metroText] = await Promise.all([
+      fetchCSV('National', CSV_SOURCES.us),
+      fetchCSV('State', CSV_SOURCES.state),
+      fetchCSV('Metro', CSV_SOURCES.metro),
+    ]);
+
+    loadMsg.textContent = 'Processing data...';
+
+    // Parse and process
+    if (usText) processUS(parseCSV(usText));
+    if (stateText) processStates(parseCSV(stateText));
+    if (metroText) processMetros(parseCSV(metroText));
+
+    // Load MBA data
+    loadMsg.textContent = 'Loading Purchase Index...';
+    await loadMbaData();
+
+    // Set header date
+    if (DATA.us?.latest) {
+      document.getElementById('header-date').textContent = yyyymmToLabel(DATA.us.latest.date);
+    }
+    document.getElementById('footer-refresh').textContent = new Date().toLocaleString();
+
+    // Render everything
+    loadMsg.textContent = 'Rendering charts...';
+    renderGeoButtons();
+    renderOverview('us');
+    renderMetroTable();
+    buildMetroButtons();
+
+    // Hide loading
+    document.getElementById('loading').style.display = 'none';
+
+  } catch (e) {
+    console.error('Init error:', e);
+    loadMsg.textContent = 'Error: ' + e.message + '. Please refresh.';
+  }
+}
+
+init();
+</script>
+</body>
+</html>
