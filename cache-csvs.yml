@@ -58,8 +58,8 @@ jobs:
 
       - name: Commit and push
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          git config user.name "Frankyfive"
+          git config user.email "Franco1824@gmail.com"
           git add data/cache/
           git diff --staged --quiet || git commit -m "Cache Realtor.com CSVs - $(date -u +%Y-%m-%d)"
           git push
