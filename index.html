@@ -819,40 +819,39 @@ async function init() {
   try {
     await openDB();
 
-    // Fetch all CSVs in parallel
+    // Phase 1: Load national + MBA (small/fast), show UI immediately
     loadMsg.textContent = 'Fetching national data...';
-    const [usText, stateText, metroText] = await Promise.all([
-      fetchCSV('National', CSV_SOURCES.us),
-      fetchCSV('State', CSV_SOURCES.state),
-      fetchCSV('Metro', CSV_SOURCES.metro),
-    ]);
-
-    loadMsg.textContent = 'Processing data...';
-
-    // Parse and process
+    const usText = await fetchCSV('National', CSV_SOURCES.us);
     if (usText) processUS(parseCSV(usText));
-    if (stateText) processStates(parseCSV(stateText));
-    if (metroText) processMetros(parseCSV(metroText));
 
-    // Load MBA data
     loadMsg.textContent = 'Loading Purchase Index...';
     await loadMbaData();
 
-    // Set header date
     if (DATA.us?.latest) {
       document.getElementById('header-date').textContent = yyyymmToLabel(DATA.us.latest.date);
     }
     document.getElementById('footer-refresh').textContent = new Date().toLocaleString();
 
-    // Render everything
-    loadMsg.textContent = 'Rendering charts...';
     renderGeoButtons();
     renderOverview('us');
-    renderMetroTable();
-    buildMetroButtons();
-
-    // Hide loading
     document.getElementById('loading').style.display = 'none';
+
+    // Phase 2: Load state + metro in background (these are large)
+    fetchCSV('State', CSV_SOURCES.state).then(stateText => {
+      if (stateText) {
+        processStates(parseCSV(stateText));
+        // Re-render if user already switched to a state
+        if (currentGeo !== 'us') renderOverview(currentGeo);
+      }
+    });
+
+    fetchCSV('Metro', CSV_SOURCES.metro).then(metroText => {
+      if (metroText) {
+        processMetros(parseCSV(metroText));
+        renderMetroTable();
+        buildMetroButtons();
+      }
+    });
 
   } catch (e) {
     console.error('Init error:', e);
