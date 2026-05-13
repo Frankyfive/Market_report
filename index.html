@@ -269,28 +269,28 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     </div>
   </div>
 
-  <!-- Charts for our metros -->
-  <div class="charts-grid" style="margin-bottom:20px;">
-    <div class="chart-card"><div class="chart-title">Cancellations - Our Metros (Monthly)</div><div class="chart-wrap" style="height:220px;"><canvas id="cancel-line-count"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">% of Pending Sales - Our Metros (Monthly)</div><div class="chart-wrap" style="height:220px;"><canvas id="cancel-line-pct"></canvas></div></div>
-  </div>
-
-  <!-- Top 15 / Bottom 15 -->
+  <!-- Top 25 / Bottom 25 -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
     <div class="mba-card" style="margin-bottom:0;">
-      <div style="color:var(--red);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Top 15 - Highest Cancellation Rate</div>
+      <div style="color:var(--red);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Top 25 - Highest Cancellation Rate</div>
       <table class="mba-table">
         <thead><tr><th style="text-align:left;">Rank</th><th style="text-align:left;">Metro</th><th>% Pending</th><th>Cancellations</th></tr></thead>
         <tbody id="cancel-top15"></tbody>
       </table>
     </div>
     <div class="mba-card" style="margin-bottom:0;">
-      <div style="color:var(--green);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Bottom 15 - Lowest Cancellation Rate</div>
+      <div style="color:var(--green);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Bottom 25 - Lowest Cancellation Rate</div>
       <table class="mba-table">
         <thead><tr><th style="text-align:left;">Rank</th><th style="text-align:left;">Metro</th><th>% Pending</th><th>Cancellations</th></tr></thead>
         <tbody id="cancel-bot15"></tbody>
       </table>
     </div>
+  </div>
+
+  <!-- % of Pending Sales chart - full width, large -->
+  <div class="chart-card" style="margin-bottom:20px;">
+    <div class="chart-title">% of Pending Sales - Our Metros (Monthly)</div>
+    <div class="chart-wrap" style="height:500px;"><canvas id="cancel-line-pct"></canvas></div>
   </div>
 
   <div class="mba-note">Source: Redfin Data Center - Contract Cancellations | Upload updated CSV monthly</div>
@@ -894,14 +894,14 @@ function showPage(name, el) {
 // CONTRACT CANCELLATIONS (Redfin)
 // ============================================================
 const CANCEL_METRO_MAP = {
-  'Dallas, TX metro area': { short: 'DFW', color: '#38bdf8' },
+  'Dallas, TX metro area': { short: 'Dallas', color: '#38bdf8' },
+  'Fort Worth, TX metro area': { short: 'Fort Worth', color: '#60a5fa' },
   'Houston, TX metro area': { short: 'Houston', color: '#f87171' },
   'Denver, CO metro area': { short: 'Denver', color: '#a78bfa' },
   'San Antonio, TX metro area': { short: 'San Antonio', color: '#34d399' },
   'Austin, TX metro area': { short: 'Austin', color: '#f97316' },
   'El Paso, TX metro area': { short: 'El Paso', color: '#facc15' },
-  'Colorado Springs, CO metro area': { short: 'Colo. Springs', color: '#e879f9' },
-  'McAllen, TX metro area': { short: 'McAllen', color: '#fb923c' }
+  'Colorado Springs, CO metro area': { short: 'Colo. Springs', color: '#e879f9' }
 };
 const CANCEL_METRO_NAMES = Object.keys(CANCEL_METRO_MAP);
 
@@ -910,6 +910,16 @@ let cancelData = []; // all rows from uploaded CSV(s)
 async function handleCancelUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
+
+  // Security: validate filename contains required prefix (case-insensitive)
+  const fname = file.name.toLowerCase();
+  if (!fname.includes('redfin_contract_cancel')) {
+    showToast('Invalid file. Filename must contain "redfin_contract_cancel"');
+    document.getElementById('cancel-file-info').textContent = 'Rejected: invalid filename';
+    event.target.value = '';
+    return;
+  }
+
   document.getElementById('cancel-file-info').textContent = 'Parsing ' + file.name + '...';
 
   const text = await file.text();
@@ -1019,9 +1029,9 @@ function renderCancellations() {
     </tr>`;
   }).join('');
 
-  // Top 15 / Bottom 15
-  const top15 = ranked.slice(0, 15);
-  const bot15 = ranked.slice(-15).reverse();
+  // Top 25 / Bottom 25
+  const top15 = ranked.slice(0, 25);
+  const bot15 = ranked.slice(-25).reverse();
 
   document.getElementById('cancel-top15').innerHTML = top15.map((r, i) => {
     const isOurs = CANCEL_METRO_NAMES.includes(r.region);
@@ -1032,7 +1042,7 @@ function renderCancellations() {
   document.getElementById('cancel-bot15').innerHTML = bot15.map((r, i) => {
     const isOurs = CANCEL_METRO_NAMES.includes(r.region);
     const style = isOurs ? 'color:var(--teal);font-weight:700;' : '';
-    const rank = totalMetros - 14 + i;
+    const rank = totalMetros - 24 + i;
     return `<tr><td style="text-align:left;">${rank}</td><td style="text-align:left;${style}">${r.region.replace(' metro area', '')}${isOurs ? ' *' : ''}</td><td><span class="stat-badge pos">${r.pctPending.toFixed(1)}%</span></td><td>${r.cancellations.toLocaleString()}</td></tr>`;
   }).join('');
 
@@ -1049,17 +1059,6 @@ function renderCancelBarCharts(ourSorted) {
   const labels = ourSorted.map(r => CANCEL_METRO_MAP[r.region].short);
   const colors = ourSorted.map(r => CANCEL_METRO_MAP[r.region].color);
 
-  if (charts['cancel-line-count']) charts['cancel-line-count'].destroy();
-  const ctx1 = document.getElementById('cancel-line-count');
-  if (ctx1) {
-    charts['cancel-line-count'] = new Chart(ctx1, {
-      type: 'bar',
-      data: { labels, datasets: [{ data: ourSorted.map(r => r.cancellations), backgroundColor: colors, borderRadius: 4 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-        scales: { x: { grid: { color: '#1e293b' }, ticks: { font: { size: 9 } } }, y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 } } } } }
-    });
-  }
-
   if (charts['cancel-line-pct']) charts['cancel-line-pct'].destroy();
   const ctx2 = document.getElementById('cancel-line-pct');
   if (ctx2) {
@@ -1067,17 +1066,15 @@ function renderCancelBarCharts(ourSorted) {
       type: 'bar',
       data: { labels, datasets: [{ data: ourSorted.map(r => r.pctPending), backgroundColor: colors, borderRadius: 4 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-        scales: { x: { grid: { color: '#1e293b' }, ticks: { font: { size: 9 } } }, y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 }, callback: v => v + '%' } } } }
+        scales: { x: { grid: { color: '#1e293b' }, ticks: { font: { size: 10 } } }, y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 10 }, callback: v => v + '%' } } } }
     });
   }
 }
 
 function renderCancelCharts(periods) {
-  // Line chart - cancellation count per metro over time
   const last24 = periods.slice(-24);
   const labels = last24.map(p => { const d = new Date(p + 'T00:00:00'); return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }); });
 
-  const countDatasets = [];
   const pctDatasets = [];
 
   for (const region of CANCEL_METRO_NAMES) {
@@ -1085,18 +1082,6 @@ function renderCancelCharts(periods) {
     const metroRows = cancelData.filter(r => r.region === region);
     const byPeriod = {};
     metroRows.forEach(r => byPeriod[r.period] = r);
-
-    countDatasets.push({
-      label: m.short,
-      data: last24.map(p => byPeriod[p]?.cancellations ?? null),
-      borderColor: m.color,
-      backgroundColor: 'transparent',
-      fill: false,
-      tension: .35,
-      pointRadius: 2,
-      pointHoverRadius: 5,
-      borderWidth: 2
-    });
 
     pctDatasets.push({
       label: m.short,
@@ -1111,19 +1096,6 @@ function renderCancelCharts(periods) {
     });
   }
 
-  if (charts['cancel-line-count']) charts['cancel-line-count'].destroy();
-  const ctx1 = document.getElementById('cancel-line-count');
-  if (ctx1) {
-    charts['cancel-line-count'] = new Chart(ctx1, {
-      type: 'line',
-      data: { labels, datasets: countDatasets },
-      options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { display: true, labels: { boxWidth: 12, padding: 8, color: '#94a3b8', font: { size: 9 } } } },
-        scales: { x: { grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 12, font: { size: 9 } } }, y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 } } } }
-      }
-    });
-  }
-
   if (charts['cancel-line-pct']) charts['cancel-line-pct'].destroy();
   const ctx2 = document.getElementById('cancel-line-pct');
   if (ctx2) {
@@ -1131,8 +1103,8 @@ function renderCancelCharts(periods) {
       type: 'line',
       data: { labels, datasets: pctDatasets },
       options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { display: true, labels: { boxWidth: 12, padding: 8, color: '#94a3b8', font: { size: 9 } } } },
-        scales: { x: { grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 12, font: { size: 9 } } }, y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 }, callback: v => v + '%' } } }
+        plugins: { legend: { display: true, labels: { boxWidth: 12, padding: 10, color: '#94a3b8', font: { size: 10 } } } },
+        scales: { x: { grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 12, font: { size: 10 } } }, y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 10 }, callback: v => v + '%' } } }
       }
     });
   }
