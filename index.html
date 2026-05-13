@@ -249,12 +249,14 @@ const CSV_SOURCES = {
     fallback: REPO_BASE + '/us_history.csv'
   },
   state: {
-    live: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_State_History.csv',
-    fallback: REPO_BASE + '/state_history.csv'
+    // GitHub cache is pre-filtered to TX+CO only (~100KB vs 1.7MB)
+    live: REPO_BASE + '/state_history.csv',
+    fallback: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_State_History.csv'
   },
   metro: {
-    live: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Metro_History.csv',
-    fallback: REPO_BASE + '/metro_history.csv'
+    // GitHub cache is pre-filtered to 8 target metros (~500KB vs 30MB)
+    live: REPO_BASE + '/metro_history.csv',
+    fallback: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Metro_History.csv'
   }
 };
 
@@ -352,9 +354,22 @@ function dbDelete(store, key) {
 async function fetchCSV(key, source) {
   updateStatus(key, 'loading', 'Fetching...');
 
-  // Tier 1: Try live S3
+  // Check IndexedDB first for instant load
+  const cached = await dbGet('csv_cache', key);
+  let result = null;
+
+  if (cached) {
+    const ageHrs = (Date.now() - cached.ts) / 3600000;
+    updateStatus(key, 'ok', 'Cached (' + Math.round(ageHrs) + 'h ago)');
+    result = cached.text;
+
+    // If cache is less than 12 hours old, use it and skip network
+    if (ageHrs < 12) return result;
+  }
+
+  // Try live S3 (or if no cache, this is required)
   try {
-    const resp = await fetch(source.live, { signal: AbortSignal.timeout(15000) });
+    const resp = await fetch(source.live, { signal: AbortSignal.timeout(20000) });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const text = await resp.text();
     await dbPut('csv_cache', key, { text, ts: Date.now() });
@@ -364,31 +379,25 @@ async function fetchCSV(key, source) {
     console.warn(key + ' S3 failed:', e.message);
   }
 
-  // Tier 2: Try GitHub Pages cached copy
+  // Try GitHub Pages cached copy
   if (source.fallback) {
     try {
-      updateStatus(key, 'loading', 'Trying cache...');
-      const resp = await fetch(source.fallback, { signal: AbortSignal.timeout(15000) });
+      updateStatus(key, 'loading', 'Trying GitHub cache...');
+      const resp = await fetch(source.fallback, { signal: AbortSignal.timeout(20000) });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const text = await resp.text();
-      // Merge: keep the longer dataset between GitHub cache and IndexedDB
-      const existing = await dbGet('csv_cache', key);
-      if (!existing || text.length >= existing.text.length) {
+      if (!cached || text.length >= cached.text.length) {
         await dbPut('csv_cache', key, { text, ts: Date.now() });
       }
       updateStatus(key, 'ok', 'GitHub Cache');
-      return existing && existing.text.length > text.length ? existing.text : text;
+      return cached && cached.text.length > text.length ? cached.text : text;
     } catch (e) {
       console.warn(key + ' GitHub fallback failed:', e.message);
     }
   }
 
-  // Tier 3: IndexedDB local cache
-  const cached = await dbGet('csv_cache', key);
-  if (cached) {
-    updateStatus(key, 'ok', 'Local ' + new Date(cached.ts).toLocaleDateString());
-    return cached.text;
-  }
+  // Return whatever we had from IndexedDB
+  if (result) return result;
 
   updateStatus(key, 'err', 'Unavailable');
   return null;
@@ -398,6 +407,22 @@ function parseCSV(text) {
   if (!text) return [];
   const result = Papa.parse(text.trim(), { header: true, skipEmptyLines: true, dynamicTyping: true });
   return result.data;
+}
+
+// Streaming parser: only keeps rows matching a filter function
+// Much faster for large CSVs where we only need a subset
+function parseCSVFiltered(text, filterFn) {
+  if (!text) return [];
+  const kept = [];
+  Papa.parse(text.trim(), {
+    header: true,
+    skipEmptyLines: true,
+    dynamicTyping: true,
+    step: function(row) {
+      if (filterFn(row.data)) kept.push(row.data);
+    }
+  });
+  return kept;
 }
 
 // ============================================================
@@ -837,19 +862,26 @@ async function init() {
     document.getElementById('loading').style.display = 'none';
 
     // Phase 2: Load state + metro in background (these are large)
+    // Use filtered parsing - only keep rows for our target states/metros
+    const stateIds = new Set(Object.keys(TARGET_STATES));
+    const stateNames = new Set(Object.values(TARGET_STATES));
     fetchCSV('State', CSV_SOURCES.state).then(stateText => {
       if (stateText) {
-        processStates(parseCSV(stateText));
-        // Re-render if user already switched to a state
+        const filtered = parseCSVFiltered(stateText, r => stateIds.has(r.state_id) || stateNames.has(r.state));
+        processStates(filtered);
         if (currentGeo !== 'us') renderOverview(currentGeo);
+        updateStatus('State', 'ok', 'Ready (' + filtered.length + ' rows)');
       }
     });
 
+    const metroCodes = new Set(METRO_KEYS.map(Number));
     fetchCSV('Metro', CSV_SOURCES.metro).then(metroText => {
       if (metroText) {
-        processMetros(parseCSV(metroText));
+        const filtered = parseCSVFiltered(metroText, r => metroCodes.has(r.cbsa_code));
+        processMetros(filtered);
         renderMetroTable();
         buildMetroButtons();
+        updateStatus('Metro', 'ok', 'Ready (' + filtered.length + ' rows)');
       }
     });
 
