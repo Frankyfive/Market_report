@@ -26,17 +26,20 @@ jobs:
             "https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Country_History.csv"
           echo "National: $(wc -l < data/cache/us_history.csv) rows"
 
-      - name: Download State CSV
+      - name: Download State CSV - filter to TX and CO only
         run: |
-          curl -sL -o data/cache/state_history.csv \
-            "https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_State_History.csv"
-          echo "State: $(wc -l < data/cache/state_history.csv) rows"
+          curl -sL "https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_State_History.csv" | \
+            head -1 > data/cache/state_history.csv
+          curl -sL "https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_State_History.csv" | \
+            grep -E ",TX,|,CO," >> data/cache/state_history.csv
+          echo "State (filtered): $(wc -l < data/cache/state_history.csv) rows"
 
-      - name: Download Metro CSV
+      - name: Download Metro CSV - filter to target metros only
         run: |
-          curl -sL -o data/cache/metro_history.csv \
-            "https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Metro_History.csv"
-          echo "Metro: $(wc -l < data/cache/metro_history.csv) rows"
+          FULL=$(curl -sL "https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Metro_History.csv")
+          echo "$FULL" | head -1 > data/cache/metro_history.csv
+          echo "$FULL" | grep -E "^[0-9]+,(19100|26420|19740|41700|12420|21340|17820|32580)," >> data/cache/metro_history.csv
+          echo "Metro (filtered): $(wc -l < data/cache/metro_history.csv) rows"
 
       - name: Download Weekly Inventory CSV
         run: |
