@@ -245,16 +245,14 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 const REPO_BASE = 'https://frankyfive.github.io/Market_report/data/cache';
 const CSV_SOURCES = {
   us: {
-    live: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Country_History.csv',
-    fallback: REPO_BASE + '/us_history.csv'
+    live: REPO_BASE + '/us_history.csv',
+    fallback: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Country_History.csv'
   },
   state: {
-    // GitHub cache is pre-filtered to TX+CO only (~100KB vs 1.7MB)
     live: REPO_BASE + '/state_history.csv',
     fallback: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_State_History.csv'
   },
   metro: {
-    // GitHub cache is pre-filtered to 8 target metros (~500KB vs 30MB)
     live: REPO_BASE + '/metro_history.csv',
     fallback: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Metro_History.csv'
   }
@@ -840,6 +838,13 @@ function showToast(msg) {
 // ============================================================
 async function init() {
   const loadMsg = document.getElementById('loading-msg');
+  const loadEl = document.getElementById('loading');
+
+  // Failsafe: never leave loading overlay up for more than 10s
+  const failsafe = setTimeout(() => {
+    loadEl.style.display = 'none';
+    console.warn('Loading timeout - forced UI display');
+  }, 10000);
 
   try {
     await openDB();
@@ -859,10 +864,10 @@ async function init() {
 
     renderGeoButtons();
     renderOverview('us');
-    document.getElementById('loading').style.display = 'none';
+    clearTimeout(failsafe);
+    loadEl.style.display = 'none';
 
-    // Phase 2: Load state + metro in background (these are large)
-    // Use filtered parsing - only keep rows for our target states/metros
+    // Phase 2: Load state + metro in background
     const stateIds = new Set(Object.keys(TARGET_STATES));
     const stateNames = new Set(Object.values(TARGET_STATES));
     fetchCSV('State', CSV_SOURCES.state).then(stateText => {
@@ -872,7 +877,7 @@ async function init() {
         if (currentGeo !== 'us') renderOverview(currentGeo);
         updateStatus('State', 'ok', 'Ready (' + filtered.length + ' rows)');
       }
-    });
+    }).catch(e => console.warn('State load error:', e));
 
     const metroCodes = new Set(METRO_KEYS.map(Number));
     fetchCSV('Metro', CSV_SOURCES.metro).then(metroText => {
@@ -883,11 +888,13 @@ async function init() {
         buildMetroButtons();
         updateStatus('Metro', 'ok', 'Ready (' + filtered.length + ' rows)');
       }
-    });
+    }).catch(e => console.warn('Metro load error:', e));
 
   } catch (e) {
     console.error('Init error:', e);
-    loadMsg.textContent = 'Error: ' + e.message + '. Please refresh.';
+    clearTimeout(failsafe);
+    loadEl.style.display = 'none';
+    loadMsg.textContent = 'Error: ' + e.message;
   }
 }
 
