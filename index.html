@@ -114,6 +114,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <div class="tab" onclick="showPage('metros',this)">Metro Markets</div>
   <div class="tab" onclick="showPage('trends',this)">Metro Trends</div>
   <div class="tab" onclick="showPage('mba',this)">MBA Purchase Index</div>
+  <div class="tab" onclick="showPage('cancel',this)">Contract Cancellations</div>
 </div>
 
 <!-- NATIONAL OVERVIEW -->
@@ -228,6 +229,71 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     </table>
     <div class="mba-note">Source: Mortgage Bankers Association / Trading Economics alerts</div>
   </div>
+</div>
+
+<!-- CONTRACT CANCELLATIONS -->
+<div class="page" id="page-cancel">
+  <div class="section-title" style="margin-top:4px;">CONTRACT CANCELLATIONS - REDFIN DATA</div>
+
+  <!-- Upload area -->
+  <div class="mba-card" style="border-color:var(--teal);border-style:dashed;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="color:var(--text);font-size:13px;font-weight:600;">Upload Redfin Cancellations CSV</div>
+        <div style="color:var(--muted);font-size:9px;margin-top:3px;">Download from Redfin Data Center (All Metros, Monthly). Upload once with full history, then update monthly. Data is cached in your browser.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <label class="btn-add" style="cursor:pointer;">
+          Choose CSV
+          <input type="file" accept=".csv" id="cancel-upload" onchange="handleCancelUpload(event)" style="display:none;"/>
+        </label>
+        <span style="color:var(--muted);font-size:10px;" id="cancel-file-info"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPIs for our metros -->
+  <div class="section-title" id="cancel-period-label">OUR MARKETS</div>
+  <div class="kpi-grid" id="cancel-kpi-grid"></div>
+
+  <!-- Our metros table -->
+  <div class="mba-card" style="margin-bottom:16px;">
+    <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:12px;">Our Metro Rankings</div>
+    <div style="overflow-x:auto;">
+    <table class="metro-table" id="cancel-our-table">
+      <thead><tr>
+        <th>Rank</th><th>Metro</th><th>Cancellations</th><th>MoM</th><th>YoY</th><th>% Pending</th><th>MoM (pp)</th><th>YoY (pp)</th>
+      </tr></thead>
+      <tbody id="cancel-our-tbody"></tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Charts for our metros -->
+  <div class="charts-grid" style="margin-bottom:20px;">
+    <div class="chart-card"><div class="chart-title">Cancellations - Our Metros (Monthly)</div><div class="chart-wrap" style="height:220px;"><canvas id="cancel-line-count"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">% of Pending Sales - Our Metros (Monthly)</div><div class="chart-wrap" style="height:220px;"><canvas id="cancel-line-pct"></canvas></div></div>
+  </div>
+
+  <!-- Top 15 / Bottom 15 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+    <div class="mba-card" style="margin-bottom:0;">
+      <div style="color:var(--red);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Top 15 - Highest Cancellation Rate</div>
+      <table class="mba-table">
+        <thead><tr><th style="text-align:left;">Rank</th><th style="text-align:left;">Metro</th><th>% Pending</th><th>Cancellations</th></tr></thead>
+        <tbody id="cancel-top15"></tbody>
+      </table>
+    </div>
+    <div class="mba-card" style="margin-bottom:0;">
+      <div style="color:var(--green);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Bottom 15 - Lowest Cancellation Rate</div>
+      <table class="mba-table">
+        <thead><tr><th style="text-align:left;">Rank</th><th style="text-align:left;">Metro</th><th>% Pending</th><th>Cancellations</th></tr></thead>
+        <tbody id="cancel-bot15"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="mba-note">Source: Redfin Data Center - Contract Cancellations | Upload updated CSV monthly</div>
 </div>
 
 <div class="footer">
@@ -821,6 +887,255 @@ function showPage(name, el) {
   el.classList.add('active');
   if (name === 'trends') renderMetroTrends(currentMetro);
   if (name === 'mba') setTimeout(() => renderMba(), 50);
+  if (name === 'cancel') setTimeout(() => renderCancellations(), 50);
+}
+
+// ============================================================
+// CONTRACT CANCELLATIONS (Redfin)
+// ============================================================
+const CANCEL_METRO_MAP = {
+  'Dallas, TX metro area': { short: 'DFW', color: '#38bdf8' },
+  'Houston, TX metro area': { short: 'Houston', color: '#f87171' },
+  'Denver, CO metro area': { short: 'Denver', color: '#a78bfa' },
+  'San Antonio, TX metro area': { short: 'San Antonio', color: '#34d399' },
+  'Austin, TX metro area': { short: 'Austin', color: '#f97316' },
+  'El Paso, TX metro area': { short: 'El Paso', color: '#facc15' },
+  'Colorado Springs, CO metro area': { short: 'Colo. Springs', color: '#e879f9' },
+  'McAllen, TX metro area': { short: 'McAllen', color: '#fb923c' }
+};
+const CANCEL_METRO_NAMES = Object.keys(CANCEL_METRO_MAP);
+
+let cancelData = []; // all rows from uploaded CSV(s)
+
+async function handleCancelUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  document.getElementById('cancel-file-info').textContent = 'Parsing ' + file.name + '...';
+
+  const text = await file.text();
+  const parsed = Papa.parse(text.trim(), { header: true, skipEmptyLines: true, dynamicTyping: false });
+
+  // Merge with existing cached data (dedup by region+period)
+  const existing = cancelData;
+  const seen = new Set(existing.map(r => r.key));
+  let added = 0;
+
+  for (const row of parsed.data) {
+    if (!row['REGION NAME'] || !row['PERIOD BEGIN']) continue;
+    const key = row['REGION NAME'] + '|' + row['PERIOD BEGIN'];
+    if (!seen.has(key)) {
+      seen.add(key);
+      const r = {
+        key,
+        region: row['REGION NAME'],
+        period: row['PERIOD BEGIN'],
+        cancellations: parseFloat(row['HOME PURCHASE CANCELLATIONS']) || 0,
+        cancelMom: parseFloat(row['HOME PURCHASE CANCELLATIONS MOM (%)']) || null,
+        cancelYoy: parseFloat(row['HOME PURCHASE CANCELLATIONS YOY (%)']) || null,
+        pctPending: row['PERCENT OF PENDING SALES (%)'] === 'NA' ? null : parseFloat(row['PERCENT OF PENDING SALES (%)']) || null,
+        pctMom: row['PERCENT OF PENDING SALES MOM (PPTS)'] === 'NA' ? null : parseFloat(row['PERCENT OF PENDING SALES MOM (PPTS)']) || null,
+        pctYoy: row['PERCENT OF PENDING SALES YOY (PPTS)'] === 'NA' ? null : parseFloat(row['PERCENT OF PENDING SALES YOY (PPTS)']) || null
+      };
+      cancelData.push(r);
+      added++;
+    }
+  }
+
+  // Save to IndexedDB
+  await dbPut('csv_cache', 'redfin_cancel', { data: cancelData, ts: Date.now() });
+
+  document.getElementById('cancel-file-info').textContent = file.name + ' - ' + added + ' new rows added (' + cancelData.length + ' total)';
+  showToast('Loaded ' + added + ' new cancellation records');
+  renderCancellations();
+}
+
+async function loadCancelData() {
+  try {
+    const cached = await dbGet('csv_cache', 'redfin_cancel');
+    if (cached && cached.data) {
+      cancelData = cached.data;
+      document.getElementById('cancel-file-info').textContent = cancelData.length + ' rows cached (last updated ' + new Date(cached.ts).toLocaleDateString() + ')';
+    }
+  } catch(e) { console.warn('Cancel cache load error', e); }
+}
+
+function renderCancellations() {
+  if (!cancelData.length) return;
+
+  // Find the latest period
+  const periods = [...new Set(cancelData.map(r => r.period))].sort();
+  const latestPeriod = periods[periods.length - 1];
+  const latestRows = cancelData.filter(r => r.period === latestPeriod);
+
+  // Format period label
+  const pd = new Date(latestPeriod + 'T00:00:00');
+  const periodLabel = pd.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  document.getElementById('cancel-period-label').textContent = 'OUR MARKETS - ' + periodLabel.toUpperCase();
+
+  // Our metros from latest period
+  const ourRows = latestRows.filter(r => CANCEL_METRO_NAMES.includes(r.region));
+
+  // Rank all metros by % pending (cancellation rate)
+  const ranked = latestRows.filter(r => r.pctPending != null).sort((a, b) => b.pctPending - a.pctPending);
+  const rankMap = {};
+  ranked.forEach((r, i) => rankMap[r.region] = i + 1);
+  const totalMetros = ranked.length;
+
+  // KPI cards for our metros
+  const kpiHtml = ourRows.map(r => {
+    const m = CANCEL_METRO_MAP[r.region];
+    const rank = rankMap[r.region] || '-';
+    const pct = r.pctPending != null ? r.pctPending.toFixed(1) + '%' : 'N/A';
+    return `<div class="kpi-card" style="--accent:${m.color}">
+      <div class="kpi-label">${m.short}</div>
+      <div class="kpi-value">${pct}</div>
+      <div class="kpi-changes">
+        <div class="kpi-row"><span class="kpi-row-lbl">Rank</span><span style="color:var(--teal);">#${rank} of ${totalMetros}</span></div>
+        <div class="kpi-row"><span class="kpi-row-lbl">Count</span><span>${r.cancellations.toLocaleString()}</span></div>
+        <div class="kpi-row"><span class="kpi-row-lbl">YoY</span><span class="${r.cancelYoy != null ? (r.cancelYoy > 0 ? 'neg' : 'pos') : 'neu'}">${r.cancelYoy != null ? (r.cancelYoy > 0 ? '+' : '') + r.cancelYoy.toFixed(1) + '%' : '-'}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('cancel-kpi-grid').innerHTML = kpiHtml;
+
+  // Our metros table (sorted by % pending desc)
+  const ourSorted = ourRows.filter(r => r.pctPending != null).sort((a, b) => b.pctPending - a.pctPending);
+  document.getElementById('cancel-our-tbody').innerHTML = ourSorted.map(r => {
+    const m = CANCEL_METRO_MAP[r.region];
+    const rank = rankMap[r.region] || '-';
+    const momCls = r.cancelMom != null ? (r.cancelMom > 0 ? 'neg' : 'pos') : 'neu';
+    const yoyCls = r.cancelYoy != null ? (r.cancelYoy > 0 ? 'neg' : 'pos') : 'neu';
+    const pMomCls = r.pctMom != null ? (r.pctMom > 0 ? 'neg' : 'pos') : 'neu';
+    const pYoyCls = r.pctYoy != null ? (r.pctYoy > 0 ? 'neg' : 'pos') : 'neu';
+    return `<tr>
+      <td style="text-align:center;color:var(--teal);font-weight:700;">#${rank}</td>
+      <td style="border-left:3px solid ${m.color}">${m.short}</td>
+      <td>${r.cancellations.toLocaleString()}</td>
+      <td class="yoy-cell ${momCls}">${r.cancelMom != null ? (r.cancelMom > 0 ? '+' : '') + r.cancelMom.toFixed(1) + '%' : '-'}</td>
+      <td class="yoy-cell ${yoyCls}">${r.cancelYoy != null ? (r.cancelYoy > 0 ? '+' : '') + r.cancelYoy.toFixed(1) + '%' : '-'}</td>
+      <td>${r.pctPending != null ? r.pctPending.toFixed(2) + '%' : 'N/A'}</td>
+      <td class="yoy-cell ${pMomCls}">${r.pctMom != null ? (r.pctMom > 0 ? '+' : '') + r.pctMom.toFixed(2) + 'pp' : '-'}</td>
+      <td class="yoy-cell ${pYoyCls}">${r.pctYoy != null ? (r.pctYoy > 0 ? '+' : '') + r.pctYoy.toFixed(2) + 'pp' : '-'}</td>
+    </tr>`;
+  }).join('');
+
+  // Top 15 / Bottom 15
+  const top15 = ranked.slice(0, 15);
+  const bot15 = ranked.slice(-15).reverse();
+
+  document.getElementById('cancel-top15').innerHTML = top15.map((r, i) => {
+    const isOurs = CANCEL_METRO_NAMES.includes(r.region);
+    const style = isOurs ? 'color:var(--teal);font-weight:700;' : '';
+    return `<tr><td style="text-align:left;">${i + 1}</td><td style="text-align:left;${style}">${r.region.replace(' metro area', '')}${isOurs ? ' *' : ''}</td><td><span class="stat-badge neg">${r.pctPending.toFixed(1)}%</span></td><td>${r.cancellations.toLocaleString()}</td></tr>`;
+  }).join('');
+
+  document.getElementById('cancel-bot15').innerHTML = bot15.map((r, i) => {
+    const isOurs = CANCEL_METRO_NAMES.includes(r.region);
+    const style = isOurs ? 'color:var(--teal);font-weight:700;' : '';
+    const rank = totalMetros - 14 + i;
+    return `<tr><td style="text-align:left;">${rank}</td><td style="text-align:left;${style}">${r.region.replace(' metro area', '')}${isOurs ? ' *' : ''}</td><td><span class="stat-badge pos">${r.pctPending.toFixed(1)}%</span></td><td>${r.cancellations.toLocaleString()}</td></tr>`;
+  }).join('');
+
+  // Line charts (only if multi-period data exists)
+  if (periods.length > 1) {
+    renderCancelCharts(periods);
+  } else {
+    // Single period - show bar chart instead
+    renderCancelBarCharts(ourSorted);
+  }
+}
+
+function renderCancelBarCharts(ourSorted) {
+  const labels = ourSorted.map(r => CANCEL_METRO_MAP[r.region].short);
+  const colors = ourSorted.map(r => CANCEL_METRO_MAP[r.region].color);
+
+  if (charts['cancel-line-count']) charts['cancel-line-count'].destroy();
+  const ctx1 = document.getElementById('cancel-line-count');
+  if (ctx1) {
+    charts['cancel-line-count'] = new Chart(ctx1, {
+      type: 'bar',
+      data: { labels, datasets: [{ data: ourSorted.map(r => r.cancellations), backgroundColor: colors, borderRadius: 4 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+        scales: { x: { grid: { color: '#1e293b' }, ticks: { font: { size: 9 } } }, y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 } } } } }
+    });
+  }
+
+  if (charts['cancel-line-pct']) charts['cancel-line-pct'].destroy();
+  const ctx2 = document.getElementById('cancel-line-pct');
+  if (ctx2) {
+    charts['cancel-line-pct'] = new Chart(ctx2, {
+      type: 'bar',
+      data: { labels, datasets: [{ data: ourSorted.map(r => r.pctPending), backgroundColor: colors, borderRadius: 4 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+        scales: { x: { grid: { color: '#1e293b' }, ticks: { font: { size: 9 } } }, y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 }, callback: v => v + '%' } } } }
+    });
+  }
+}
+
+function renderCancelCharts(periods) {
+  // Line chart - cancellation count per metro over time
+  const last24 = periods.slice(-24);
+  const labels = last24.map(p => { const d = new Date(p + 'T00:00:00'); return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }); });
+
+  const countDatasets = [];
+  const pctDatasets = [];
+
+  for (const region of CANCEL_METRO_NAMES) {
+    const m = CANCEL_METRO_MAP[region];
+    const metroRows = cancelData.filter(r => r.region === region);
+    const byPeriod = {};
+    metroRows.forEach(r => byPeriod[r.period] = r);
+
+    countDatasets.push({
+      label: m.short,
+      data: last24.map(p => byPeriod[p]?.cancellations ?? null),
+      borderColor: m.color,
+      backgroundColor: 'transparent',
+      fill: false,
+      tension: .35,
+      pointRadius: 2,
+      pointHoverRadius: 5,
+      borderWidth: 2
+    });
+
+    pctDatasets.push({
+      label: m.short,
+      data: last24.map(p => byPeriod[p]?.pctPending ?? null),
+      borderColor: m.color,
+      backgroundColor: 'transparent',
+      fill: false,
+      tension: .35,
+      pointRadius: 2,
+      pointHoverRadius: 5,
+      borderWidth: 2
+    });
+  }
+
+  if (charts['cancel-line-count']) charts['cancel-line-count'].destroy();
+  const ctx1 = document.getElementById('cancel-line-count');
+  if (ctx1) {
+    charts['cancel-line-count'] = new Chart(ctx1, {
+      type: 'line',
+      data: { labels, datasets: countDatasets },
+      options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: true, labels: { boxWidth: 12, padding: 8, color: '#94a3b8', font: { size: 9 } } } },
+        scales: { x: { grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 12, font: { size: 9 } } }, y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 } } } }
+      }
+    });
+  }
+
+  if (charts['cancel-line-pct']) charts['cancel-line-pct'].destroy();
+  const ctx2 = document.getElementById('cancel-line-pct');
+  if (ctx2) {
+    charts['cancel-line-pct'] = new Chart(ctx2, {
+      type: 'line',
+      data: { labels, datasets: pctDatasets },
+      options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: true, labels: { boxWidth: 12, padding: 8, color: '#94a3b8', font: { size: 9 } } } },
+        scales: { x: { grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 12, font: { size: 9 } } }, y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 }, callback: v => v + '%' } } }
+      }
+    });
+  }
 }
 
 // ============================================================
@@ -856,6 +1171,9 @@ async function init() {
 
     loadMsg.textContent = 'Loading Purchase Index...';
     await loadMbaData();
+
+    // Load cached cancellation data
+    await loadCancelData();
 
     if (DATA.us?.latest) {
       document.getElementById('header-date').textContent = yyyymmToLabel(DATA.us.latest.date);
