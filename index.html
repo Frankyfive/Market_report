@@ -115,6 +115,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <div class="tab" onclick="showPage('trends',this)">Metro Trends</div>
   <div class="tab" onclick="showPage('mba',this)">MBA Purchase Index</div>
   <div class="tab" onclick="showPage('cancel',this)">Contract Cancellations</div>
+  <div class="tab" onclick="showPage('txhousing',this)">Texas Housing</div>
 </div>
 
 <!-- NATIONAL OVERVIEW -->
@@ -186,7 +187,11 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       </div>
       <button class="btn-add" onclick="addMbaReading()">Add Reading</button>
     </div>
-    <div style="color:var(--muted);font-size:9px;">Manually entered readings are saved in your browser and merged with seed data. They persist across sessions.</div>
+    <div style="color:var(--muted);font-size:9px;">Manually entered readings are saved in your browser and synced from the repo.</div>
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <button class="btn-add" style="background:var(--purple);font-size:9px;padding:5px 12px;" onclick="exportMbaJson()">Export JSON to Repo</button>
+      <span style="color:var(--muted);font-size:9px;align-self:center;" id="mba-export-info"></span>
+    </div>
   </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
@@ -242,11 +247,12 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
         <div style="color:var(--text);font-size:13px;font-weight:600;">Upload Redfin Cancellations CSV</div>
         <div style="color:var(--muted);font-size:9px;margin-top:3px;">Download from Redfin Data Center (All Metros, Monthly). Upload once with full history, then update monthly. Data is cached in your browser.</div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <label class="btn-add" style="cursor:pointer;">
           Choose CSV
           <input type="file" accept=".csv" id="cancel-upload" onchange="handleCancelUpload(event)" style="display:none;"/>
         </label>
+        <button class="btn-add" style="background:var(--purple);font-size:9px;padding:5px 12px;" onclick="exportCancelJson()">Export JSON to Repo</button>
         <span style="color:var(--muted);font-size:10px;" id="cancel-file-info"></span>
       </div>
     </div>
@@ -294,6 +300,70 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   </div>
 
   <div class="mba-note">Source: Redfin Data Center - Contract Cancellations | Upload updated CSV monthly</div>
+</div>
+
+<!-- TEXAS HOUSING (TAMU) -->
+<div class="page" id="page-txhousing">
+  <div class="section-title" style="margin-top:4px;">TEXAS HOUSING ACTIVITY - TEXAS A&M REAL ESTATE CENTER</div>
+
+  <!-- Upload area -->
+  <div class="mba-card" style="border-color:var(--teal);border-style:dashed;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="color:var(--text);font-size:13px;font-weight:600;">Upload TAMU Housing CSV(s)</div>
+        <div style="color:var(--muted);font-size:9px;margin-top:3px;">Upload individual market CSVs from trerc.tamu.edu (Texas, DFW, Houston, etc). Files merge automatically. Data is cached in your browser.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <label class="btn-add" style="cursor:pointer;">
+          Choose CSV(s)
+          <input type="file" accept=".csv" multiple id="tamu-upload" onchange="handleTamuUpload(event)" style="display:none;"/>
+        </label>
+        <button class="btn-add" style="background:var(--purple);font-size:9px;padding:5px 12px;" onclick="exportTamuJson()">Export JSON to Repo</button>
+        <span style="color:var(--muted);font-size:10px;" id="tamu-file-info"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Market selector -->
+  <div style="margin-bottom:14px;"><div class="geo-btns" id="tamu-market-btns"></div></div>
+
+  <!-- KPIs -->
+  <div class="section-title" id="tamu-market-label">TEXAS</div>
+  <div class="kpi-grid" id="tamu-kpi-grid"></div>
+
+  <!-- Comparison table -->
+  <div class="mba-card" style="margin-bottom:16px;">
+    <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:12px;" id="tamu-table-title">Latest Month Comparison</div>
+    <div style="overflow-x:auto;">
+    <table class="metro-table">
+      <thead><tr>
+        <th>Market</th><th>Sales</th><th>YoY</th><th>Med. Price</th><th>Avg. Price</th><th>Active Listings</th><th>Months Inv.</th><th>$ Volume</th><th>Vol. YoY</th>
+      </tr></thead>
+      <tbody id="tamu-comp-tbody"></tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid" style="margin-bottom:16px;">
+    <div class="chart-card"><div class="chart-title">Median Price</div><div class="chart-wrap"><canvas id="tamu-ch-price"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Sales</div><div class="chart-wrap"><canvas id="tamu-ch-sales"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Active Listings</div><div class="chart-wrap"><canvas id="tamu-ch-active"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Months Inventory</div><div class="chart-wrap"><canvas id="tamu-ch-inv"></canvas></div></div>
+  </div>
+
+  <!-- Full-width multi-market overlay chart -->
+  <div class="chart-card" style="margin-bottom:20px;">
+    <div class="chart-title">Median Price - All Markets</div>
+    <div class="chart-wrap" style="height:300px;"><canvas id="tamu-ch-all-price"></canvas></div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:20px;">
+    <div class="chart-title">Months Inventory - All Markets</div>
+    <div class="chart-wrap" style="height:300px;"><canvas id="tamu-ch-all-inv"></canvas></div>
+  </div>
+
+  <div class="mba-note">Source: Texas Real Estate Research Center at Texas A&M University | trerc.tamu.edu</div>
 </div>
 
 <div class="footer">
@@ -888,6 +958,7 @@ function showPage(name, el) {
   if (name === 'trends') renderMetroTrends(currentMetro);
   if (name === 'mba') setTimeout(() => renderMba(), 50);
   if (name === 'cancel') setTimeout(() => renderCancellations(), 50);
+  if (name === 'txhousing') setTimeout(() => renderTamu(), 50);
 }
 
 // ============================================================
@@ -1111,6 +1182,307 @@ function renderCancelCharts(periods) {
 }
 
 // ============================================================
+// TEXAS HOUSING (TAMU)
+// ============================================================
+const TAMU_MARKET_COLORS = {
+  'Texas': '#38bdf8',
+  'Dallas-Fort Worth-Arlington': '#f87171',
+  'Houston-Pasadena-Sugar Land': '#a78bfa',
+  'San Antonio-New Braunfels': '#34d399',
+  'Austin-Round Rock-San Marcos': '#f97316',
+  'El Paso': '#facc15'
+};
+const TAMU_SHORT = {
+  'Texas': 'Texas',
+  'Dallas-Fort Worth-Arlington': 'DFW',
+  'Houston-Pasadena-Sugar Land': 'Houston',
+  'San Antonio-New Braunfels': 'San Antonio',
+  'Austin-Round Rock-San Marcos': 'Austin',
+  'El Paso': 'El Paso'
+};
+
+let tamuData = []; // all rows
+let currentTamuMarket = 'Texas';
+
+async function handleTamuUpload(event) {
+  const files = event.target.files;
+  if (!files.length) return;
+  let totalAdded = 0;
+
+  for (const file of files) {
+    const text = await file.text();
+    const parsed = Papa.parse(text.trim(), { header: true, skipEmptyLines: true, dynamicTyping: false });
+    const seen = new Set(tamuData.map(r => r.key));
+
+    for (const row of parsed.data) {
+      if (!row['Market Name'] || !row['Date']) continue;
+      const market = row['Market Name'].trim();
+      const date = row['Date'].trim();
+      const key = market + '|' + date;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      tamuData.push({
+        key,
+        market,
+        date,
+        sales: parseInt(String(row['Sales']).replace(/,/g,'')) || 0,
+        salesYoy: parseFloat(row['Sales YoY%']) || null,
+        dollarVol: parseInt(String(row['Dollar Volume']).replace(/,/g,'')) || 0,
+        dollarVolYoy: parseFloat(row['Dollar Volume YoY%']) || null,
+        avgPrice: parseInt(String(row['Average Price']).replace(/,/g,'')) || 0,
+        medPrice: parseInt(String(row['Median Price']).replace(/,/g,'')) || 0,
+        activeListings: parseInt(String(row['Active Listings EOM']).replace(/,/g,'')) || 0,
+        monthsInv: parseFloat(row['Months Inventory']) || 0
+      });
+      totalAdded++;
+    }
+  }
+
+  await dbPut('csv_cache', 'tamu_housing', { data: tamuData, ts: Date.now() });
+  document.getElementById('tamu-file-info').textContent = totalAdded + ' new rows (' + tamuData.length + ' total)';
+  showToast('Loaded ' + totalAdded + ' TAMU housing records');
+  renderTamu();
+}
+
+async function loadTamuData() {
+  try {
+    const cached = await dbGet('csv_cache', 'tamu_housing');
+    if (cached && cached.data) {
+      tamuData = cached.data;
+      document.getElementById('tamu-file-info').textContent = tamuData.length + ' rows cached';
+    }
+  } catch(e) {}
+}
+
+async function loadTamuFromRepo() {
+  try {
+    const resp = await fetch(MANUAL_BASE + '/tamu_housing.json', { signal: AbortSignal.timeout(8000) });
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (!Array.isArray(data) || !data.length) return;
+    const seen = new Set(tamuData.map(r => r.key));
+    let added = 0;
+    for (const r of data) {
+      if (!seen.has(r.key)) { seen.add(r.key); tamuData.push(r); added++; }
+    }
+    if (added > 0 || tamuData.length === 0) {
+      if (tamuData.length === 0) tamuData = data;
+      await dbPut('csv_cache', 'tamu_housing', { data: tamuData, ts: Date.now() });
+    }
+  } catch(e) {}
+}
+
+function exportTamuJson() {
+  if (!tamuData.length) { showToast('No TAMU data to export'); return; }
+  const blob = new Blob([JSON.stringify(tamuData)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tamu_housing.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Exported ' + tamuData.length + ' TAMU records');
+}
+
+function renderTamu() {
+  if (!tamuData.length) return;
+
+  // Get unique markets
+  const markets = [...new Set(tamuData.map(r => r.market))];
+
+  // Build market buttons
+  document.getElementById('tamu-market-btns').innerHTML = markets.map(m => {
+    const short = TAMU_SHORT[m] || m;
+    const color = TAMU_MARKET_COLORS[m] || '#94a3b8';
+    const active = m === currentTamuMarket;
+    const style = active ? `background:${color};color:#0f172a;border-color:${color}` : '';
+    return `<button class="geo-btn ${active?'active':''}" style="${style}" onclick="selectTamuMarket('${m.replace(/'/g,"\\'")}',this)">${short}</button>`;
+  }).join('');
+
+  // Get data for selected market
+  const mktData = tamuData.filter(r => r.market === currentTamuMarket).sort((a,b) => a.date.localeCompare(b.date));
+  if (!mktData.length) return;
+
+  const latest = mktData[mktData.length - 1];
+  const prev = mktData.length > 1 ? mktData[mktData.length - 2] : null;
+  const short = TAMU_SHORT[currentTamuMarket] || currentTamuMarket;
+  const color = TAMU_MARKET_COLORS[currentTamuMarket] || '#38bdf8';
+  const latestDate = new Date(latest.date + 'T00:00:00');
+  const periodLabel = latestDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  document.getElementById('tamu-market-label').textContent = short.toUpperCase() + ' - ' + periodLabel.toUpperCase();
+
+  // KPIs
+  const mom = (field) => prev && prev[field] ? (latest[field] - prev[field]) / prev[field] : null;
+  const kpis = [
+    { label: 'Median Price', val: '$' + latest.medPrice.toLocaleString(), yoyStr: latest.salesYoy != null ? '' : '', yoy: null, mom: mom('medPrice'), accent: color },
+    { label: 'Sales', val: latest.sales.toLocaleString(), yoyStr: latest.salesYoy != null ? (latest.salesYoy >= 0 ? '+' : '') + (latest.salesYoy * 100).toFixed(1) + '%' : '-', yoyCls: latest.salesYoy != null ? (latest.salesYoy >= 0 ? 'pos' : 'neg') : 'neu', mom: mom('sales'), accent: '#34d399' },
+    { label: 'Active Listings', val: latest.activeListings.toLocaleString(), yoy: null, yoyStr: '', mom: mom('activeListings'), accent: '#a78bfa' },
+    { label: 'Months Inventory', val: latest.monthsInv.toFixed(2), yoy: null, yoyStr: '', mom: mom('monthsInv'), accent: '#f97316' },
+    { label: 'Avg Price', val: '$' + latest.avgPrice.toLocaleString(), yoy: null, yoyStr: '', mom: mom('avgPrice'), accent: '#facc15' },
+    { label: 'Dollar Volume', val: '$' + (latest.dollarVol / 1e9).toFixed(2) + 'B', yoyStr: latest.dollarVolYoy != null ? (latest.dollarVolYoy >= 0 ? '+' : '') + (latest.dollarVolYoy * 100).toFixed(1) + '%' : '-', yoyCls: latest.dollarVolYoy != null ? (latest.dollarVolYoy >= 0 ? 'pos' : 'neg') : 'neu', mom: mom('dollarVol'), accent: '#e879f9' },
+  ];
+  document.getElementById('tamu-kpi-grid').innerHTML = kpis.map(k => kpiCard(k)).join('');
+
+  // Comparison table (latest month for all markets)
+  const latestDate2 = latest.date;
+  const latestAll = markets.map(m => {
+    const rows = tamuData.filter(r => r.market === m && r.date === latestDate2);
+    return rows.length ? rows[0] : null;
+  }).filter(Boolean);
+
+  document.getElementById('tamu-table-title').textContent = 'Market Comparison - ' + periodLabel;
+  document.getElementById('tamu-comp-tbody').innerHTML = latestAll.map(r => {
+    const c = TAMU_MARKET_COLORS[r.market] || '#94a3b8';
+    const sYoyCls = r.salesYoy != null ? (r.salesYoy >= 0 ? 'pos' : 'neg') : 'neu';
+    const vYoyCls = r.dollarVolYoy != null ? (r.dollarVolYoy >= 0 ? 'pos' : 'neg') : 'neu';
+    return `<tr>
+      <td style="border-left:3px solid ${c}">${TAMU_SHORT[r.market]||r.market}</td>
+      <td>${r.sales.toLocaleString()}</td>
+      <td class="yoy-cell ${sYoyCls}">${r.salesYoy != null ? (r.salesYoy >= 0 ? '+' : '') + (r.salesYoy * 100).toFixed(1) + '%' : '-'}</td>
+      <td>$${r.medPrice.toLocaleString()}</td>
+      <td>$${r.avgPrice.toLocaleString()}</td>
+      <td>${r.activeListings.toLocaleString()}</td>
+      <td>${r.monthsInv.toFixed(2)}</td>
+      <td>$${(r.dollarVol / 1e6).toFixed(0)}M</td>
+      <td class="yoy-cell ${vYoyCls}">${r.dollarVolYoy != null ? (r.dollarVolYoy >= 0 ? '+' : '') + (r.dollarVolYoy * 100).toFixed(1) + '%' : '-'}</td>
+    </tr>`;
+  }).join('');
+
+  // Single market charts (last 24 months)
+  const slice = mktData.slice(-24);
+  const labels = slice.map(r => { const d = new Date(r.date + 'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
+
+  mkChart('tamu-ch-price', labels, ds(slice.map(r => r.medPrice), color), true);
+  mkChart('tamu-ch-sales', labels, ds(slice.map(r => r.sales), '#34d399', false));
+  mkChart('tamu-ch-active', labels, ds(slice.map(r => r.activeListings), '#a78bfa', false));
+  mkChart('tamu-ch-inv', labels, ds(slice.map(r => r.monthsInv), '#f97316', false));
+
+  // All-market overlay charts
+  renderTamuAllCharts(markets);
+}
+
+function renderTamuAllCharts(markets) {
+  const allDates = [...new Set(tamuData.map(r => r.date))].sort();
+  const last24 = allDates.slice(-24);
+  const labels = last24.map(d => { const dt = new Date(d + 'T00:00:00'); return dt.toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
+
+  const priceDS = [];
+  const invDS = [];
+  for (const m of markets) {
+    const c = TAMU_MARKET_COLORS[m] || '#94a3b8';
+    const byDate = {};
+    tamuData.filter(r => r.market === m).forEach(r => byDate[r.date] = r);
+    priceDS.push({ label: TAMU_SHORT[m]||m, data: last24.map(d => byDate[d]?.medPrice ?? null), borderColor: c, backgroundColor: 'transparent', fill: false, tension: .35, pointRadius: 2, borderWidth: 2 });
+    invDS.push({ label: TAMU_SHORT[m]||m, data: last24.map(d => byDate[d]?.monthsInv ?? null), borderColor: c, backgroundColor: 'transparent', fill: false, tension: .35, pointRadius: 2, borderWidth: 2 });
+  }
+
+  if (charts['tamu-ch-all-price']) charts['tamu-ch-all-price'].destroy();
+  const ctx1 = document.getElementById('tamu-ch-all-price');
+  if (ctx1) {
+    charts['tamu-ch-all-price'] = new Chart(ctx1, {
+      type: 'line', data: { labels, datasets: priceDS },
+      options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: true, labels: { boxWidth: 12, padding: 10, color: '#94a3b8', font: { size: 10 } } } },
+        scales: { x: { grid: { color: '#1e293b' }, ticks: { font: { size: 9 } } }, y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 }, callback: v => '$' + (v/1000).toFixed(0) + 'k' } } }
+      }
+    });
+  }
+
+  if (charts['tamu-ch-all-inv']) charts['tamu-ch-all-inv'].destroy();
+  const ctx2 = document.getElementById('tamu-ch-all-inv');
+  if (ctx2) {
+    charts['tamu-ch-all-inv'] = new Chart(ctx2, {
+      type: 'line', data: { labels, datasets: invDS },
+      options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: true, labels: { boxWidth: 12, padding: 10, color: '#94a3b8', font: { size: 10 } } } },
+        scales: { x: { grid: { color: '#1e293b' }, ticks: { font: { size: 9 } } }, y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 } } } }
+      }
+    });
+  }
+}
+
+function selectTamuMarket(market, btn) {
+  currentTamuMarket = market;
+  renderTamu();
+}
+
+// ============================================================
+// DATA PERSISTENCE (Export to repo / Load from repo)
+// ============================================================
+const MANUAL_BASE = REPO_BASE.replace('/cache', '/manual');
+
+// Export MBA manual entries as JSON download
+function exportMbaJson() {
+  const manualEntries = mbaData.filter(r => r.manual);
+  if (!manualEntries.length) { showToast('No manual entries to export'); return; }
+  const data = manualEntries.map(r => ({ date: r.date, val: r.val }));
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'mba_manual.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  document.getElementById('mba-export-info').textContent = 'Downloaded. Commit to data/manual/ in repo.';
+  showToast('Exported ' + data.length + ' MBA entries');
+}
+
+// Export cancellation data as JSON download
+function exportCancelJson() {
+  if (!cancelData.length) { showToast('No cancellation data to export'); return; }
+  const blob = new Blob([JSON.stringify(cancelData, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'redfin_cancel.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Exported ' + cancelData.length + ' cancellation records');
+}
+
+// Load MBA manual entries from repo (for other users / fresh browsers)
+async function loadMbaFromRepo() {
+  try {
+    const resp = await fetch(MANUAL_BASE + '/mba_manual.json', { signal: AbortSignal.timeout(5000) });
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (!Array.isArray(data) || !data.length) return;
+    let added = 0;
+    for (const entry of data) {
+      const existing = await dbGet('mba_manual', entry.date).catch(() => null);
+      if (existing == null) {
+        await dbPut('mba_manual', entry.date, entry.val);
+        added++;
+      }
+    }
+    if (added > 0) console.log('MBA: loaded ' + added + ' entries from repo');
+  } catch(e) { /* repo file doesn't exist yet, that's fine */ }
+}
+
+// Load cancellation data from repo
+async function loadCancelFromRepo() {
+  try {
+    const resp = await fetch(MANUAL_BASE + '/redfin_cancel.json', { signal: AbortSignal.timeout(8000) });
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (!Array.isArray(data) || !data.length) return;
+    // Merge with existing
+    const seen = new Set(cancelData.map(r => r.key));
+    let added = 0;
+    for (const r of data) {
+      if (!seen.has(r.key)) {
+        seen.add(r.key);
+        cancelData.push(r);
+        added++;
+      }
+    }
+    if (added > 0 || cancelData.length === 0) {
+      if (cancelData.length === 0) cancelData = data;
+      await dbPut('csv_cache', 'redfin_cancel', { data: cancelData, ts: Date.now() });
+      console.log('Cancel: loaded ' + (added || data.length) + ' entries from repo');
+    }
+  } catch(e) { /* repo file doesn't exist yet */ }
+}
+
+// ============================================================
 // Toast
 // ============================================================
 function showToast(msg) {
@@ -1142,10 +1514,17 @@ async function init() {
     if (usText) processUS(parseCSV(usText));
 
     loadMsg.textContent = 'Loading Purchase Index...';
+    await loadMbaFromRepo();
     await loadMbaData();
 
-    // Load cached cancellation data
+    // Load cached cancellation data (IndexedDB first, then repo)
     await loadCancelData();
+    await loadCancelFromRepo();
+    if (cancelData.length) await dbPut('csv_cache', 'redfin_cancel', { data: cancelData, ts: Date.now() });
+
+    // Load TAMU housing data
+    await loadTamuData();
+    await loadTamuFromRepo();
 
     if (DATA.us?.latest) {
       document.getElementById('header-date').textContent = yyyymmToLabel(DATA.us.latest.date);
