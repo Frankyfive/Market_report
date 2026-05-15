@@ -331,7 +331,15 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <div class="section-title" id="tamu-market-label">TEXAS</div>
   <div class="kpi-grid" id="tamu-kpi-grid"></div>
 
-  <!-- Comparison table -->
+  <!-- Single market charts -->
+  <div class="charts-grid" style="margin-bottom:16px;">
+    <div class="chart-card"><div class="chart-title">Median Price</div><div class="chart-wrap"><canvas id="tamu-ch-price"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Sales</div><div class="chart-wrap"><canvas id="tamu-ch-sales"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Active Listings</div><div class="chart-wrap"><canvas id="tamu-ch-active"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Months Inventory</div><div class="chart-wrap"><canvas id="tamu-ch-inv"></canvas></div></div>
+  </div>
+
+  <!-- Comparison table (moved below charts) -->
   <div class="mba-card" style="margin-bottom:16px;">
     <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:12px;" id="tamu-table-title">Latest Month Comparison</div>
     <div style="overflow-x:auto;">
@@ -344,15 +352,12 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     </div>
   </div>
 
-  <!-- Charts -->
-  <div class="charts-grid" style="margin-bottom:16px;">
-    <div class="chart-card"><div class="chart-title">Median Price</div><div class="chart-wrap"><canvas id="tamu-ch-price"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Sales</div><div class="chart-wrap"><canvas id="tamu-ch-sales"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Active Listings</div><div class="chart-wrap"><canvas id="tamu-ch-active"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Months Inventory</div><div class="chart-wrap"><canvas id="tamu-ch-inv"></canvas></div></div>
+  <!-- Full-width multi-market overlay charts -->
+  <div class="chart-card" style="margin-bottom:20px;">
+    <div class="chart-title">Home Sales YoY% - All Markets</div>
+    <div class="chart-wrap" style="height:300px;"><canvas id="tamu-ch-all-salesyoy"></canvas></div>
   </div>
 
-  <!-- Full-width multi-market overlay chart -->
   <div class="chart-card" style="margin-bottom:20px;">
     <div class="chart-title">Median Price - All Markets</div>
     <div class="chart-wrap" style="height:300px;"><canvas id="tamu-ch-all-price"></canvas></div>
@@ -1368,12 +1373,29 @@ function renderTamuAllCharts(markets) {
 
   const priceDS = [];
   const invDS = [];
+  const salesYoyDS = [];
   for (const m of markets) {
     const c = TAMU_MARKET_COLORS[m] || '#94a3b8';
     const byDate = {};
     tamuData.filter(r => r.market === m).forEach(r => byDate[r.date] = r);
     priceDS.push({ label: TAMU_SHORT[m]||m, data: last24.map(d => byDate[d]?.medPrice ?? null), borderColor: c, backgroundColor: 'transparent', fill: false, tension: .35, pointRadius: 2, borderWidth: 2 });
     invDS.push({ label: TAMU_SHORT[m]||m, data: last24.map(d => byDate[d]?.monthsInv ?? null), borderColor: c, backgroundColor: 'transparent', fill: false, tension: .35, pointRadius: 2, borderWidth: 2 });
+    salesYoyDS.push({ label: TAMU_SHORT[m]||m, data: last24.map(d => byDate[d]?.salesYoy != null ? +(byDate[d].salesYoy * 100).toFixed(1) : null), borderColor: c, backgroundColor: 'transparent', fill: false, tension: .35, pointRadius: 2, borderWidth: 2 });
+  }
+
+  // Sales YoY chart
+  if (charts['tamu-ch-all-salesyoy']) charts['tamu-ch-all-salesyoy'].destroy();
+  const ctx0 = document.getElementById('tamu-ch-all-salesyoy');
+  if (ctx0) {
+    charts['tamu-ch-all-salesyoy'] = new Chart(ctx0, {
+      type: 'line', data: { labels, datasets: salesYoyDS },
+      options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: true, labels: { boxWidth: 12, padding: 10, color: '#94a3b8', font: { size: 10 } } },
+          annotation: { annotations: { zero: { type: 'line', yMin: 0, yMax: 0, borderColor: '#475569', borderWidth: 1, borderDash: [4,4] } } }
+        },
+        scales: { x: { grid: { color: '#1e293b' }, ticks: { font: { size: 9 } } }, y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 }, callback: v => v + '%' } } }
+      }
+    });
   }
 
   if (charts['tamu-ch-all-price']) charts['tamu-ch-all-price'].destroy();
