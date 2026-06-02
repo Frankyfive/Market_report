@@ -400,6 +400,13 @@ const CSV_SOURCES = {
 };
 
 const TARGET_STATES = { TX: 'Texas', CO: 'Colorado' };
+const REGIONS = {
+  south: { label: 'SOUTH', accent: '#f87171', states: ['TX','FL','GA','NC','SC','VA','TN','AL','MS','LA','AR','KY','WV','OK','MD','DC','DE'] },
+  mountain: { label: 'MOUNTAIN', accent: '#a78bfa', states: ['CO','UT','AZ','NV','NM','ID','MT','WY'] },
+  west: { label: 'WEST', accent: '#34d399', states: ['CA','WA','OR','HI','AK'] },
+  midwest: { label: 'MIDWEST', accent: '#facc15', states: ['IL','WI','OH','MI','IN','MN','IA','MO','ND','SD','NE','KS'] },
+  northeast: { label: 'NORTHEAST', accent: '#e879f9', states: ['NY','PA','NJ','CT','MA','ME','NH','VT','RI'] }
+};
 const TARGET_METROS = {
   19100: { short: 'DFW', full: 'Dallas-Fort Worth-Arlington, TX' },
   26420: { short: 'Houston', full: 'Houston-Pasadena-The Woodlands, TX' },
@@ -414,7 +421,16 @@ const TARGET_METROS = {
 const METRO_KEYS = Object.keys(TARGET_METROS);
 const METRO_SHORTS = METRO_KEYS.map(k => TARGET_METROS[k].short);
 const METRO_COLORS = ['#38bdf8','#f87171','#a78bfa','#34d399','#f97316','#facc15','#e879f9','#fb923c'];
-const GEO_MAP = { us: { label: 'UNITED STATES', accent: '#38bdf8' }, TX: { label: 'TEXAS', accent: '#f97316' }, CO: { label: 'COLORADO', accent: '#a78bfa' } };
+const GEO_MAP = {
+  us: { label: 'UNITED STATES', accent: '#38bdf8' },
+  TX: { label: 'TEXAS', accent: '#f97316' },
+  CO: { label: 'COLORADO', accent: '#a78bfa' },
+  south: { label: 'SOUTH REGION', accent: '#f87171' },
+  mountain: { label: 'MOUNTAIN REGION', accent: '#a78bfa' },
+  west: { label: 'WEST REGION', accent: '#34d399' },
+  midwest: { label: 'MIDWEST REGION', accent: '#facc15' },
+  northeast: { label: 'NORTHEAST REGION', accent: '#e879f9' }
+};
 
 const FIELDS = ['median_listing_price','active_listing_count','median_days_on_market','new_listing_count','price_reduced_share','pending_listing_count','pending_ratio'];
 const CHANGE_FIELDS = FIELDS.map(f => f + '_yy');
@@ -605,6 +621,7 @@ function processUS(rows) {
 }
 
 function processStates(rows) {
+  // Process target states (TX, CO)
   Object.keys(TARGET_STATES).forEach(sid => {
     const stateRows = rows.filter(r => r.state_id === sid || r.state === TARGET_STATES[sid]);
     stateRows.sort((a, b) => a.month_date_yyyymm - b.month_date_yyyymm);
@@ -616,6 +633,46 @@ function processStates(rows) {
     });
     const latest = history[history.length - 1];
     DATA[sid] = { history, latest };
+  });
+
+  // Process regions
+  const SUM_FIELDS = ['active_listing_count','new_listing_count','pending_listing_count'];
+  const AVG_FIELDS = ['median_listing_price','median_days_on_market','price_reduced_share','pending_ratio'];
+
+  Object.entries(REGIONS).forEach(([rKey, rDef]) => {
+    const stateSet = new Set(rDef.states);
+    const regionRows = rows.filter(r => stateSet.has(r.state_id));
+
+    // Group by date
+    const byDate = {};
+    regionRows.forEach(r => {
+      const d = r.month_date_yyyymm;
+      if (!byDate[d]) byDate[d] = [];
+      byDate[d].push(r);
+    });
+
+    const dates = Object.keys(byDate).map(Number).sort((a,b) => a - b);
+    const history = dates.map(d => {
+      const group = byDate[d];
+      const obj = { date: d, label: yyyymmToLabel(d) };
+      SUM_FIELDS.forEach(f => { obj[f] = group.reduce((s, r) => s + (r[f] || 0), 0); });
+      AVG_FIELDS.forEach(f => {
+        const vals = group.map(r => r[f]).filter(v => v != null && v !== 0);
+        obj[f] = vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+      });
+      return obj;
+    });
+
+    // Compute YoY from aggregated history
+    history.forEach((h, i) => {
+      const yoyIdx = history.findIndex(x => x.date === h.date - 100);
+      [...SUM_FIELDS, ...AVG_FIELDS].forEach(f => {
+        h[f + '_yy'] = (yoyIdx >= 0 && history[yoyIdx][f]) ? (h[f] - history[yoyIdx][f]) / history[yoyIdx][f] : null;
+      });
+    });
+
+    const latest = history[history.length - 1];
+    DATA[rKey] = { history, latest };
   });
 }
 
@@ -780,10 +837,18 @@ function kpiCard(k) {
 let currentGeo = 'us';
 
 function renderGeoButtons() {
-  const geos = [{ key: 'us', label: 'United States' }, { key: 'TX', label: 'Texas' }, { key: 'CO', label: 'Colorado' }];
-  document.getElementById('geo-btns').innerHTML = geos.map(g =>
-    `<button class="geo-btn ${g.key === currentGeo ? 'active' : ''}" onclick="selectGeo('${g.key}',this)">${g.label}</button>`
-  ).join('');
+  const geos = [
+    { key: 'us', label: 'United States' }, { key: 'TX', label: 'Texas' }, { key: 'CO', label: 'Colorado' }
+  ];
+  const regions = [
+    { key: 'south', label: 'South' }, { key: 'mountain', label: 'Mountain' },
+    { key: 'west', label: 'West' }, { key: 'midwest', label: 'Midwest' }, { key: 'northeast', label: 'Northeast' }
+  ];
+  const mkBtn = g => `<button class="geo-btn ${g.key === currentGeo ? 'active' : ''}" onclick="selectGeo('${g.key}',this)">${g.label}</button>`;
+  document.getElementById('geo-btns').innerHTML =
+    geos.map(mkBtn).join('') +
+    '<span style="color:var(--border);margin:0 6px;font-size:16px;">|</span>' +
+    regions.map(mkBtn).join('');
 }
 
 function selectGeo(geo, btn) {
@@ -1118,7 +1183,7 @@ function renderCancellations() {
   document.getElementById('cancel-bot15').innerHTML = bot15.map((r, i) => {
     const isOurs = CANCEL_METRO_NAMES.includes(r.region);
     const style = isOurs ? 'color:var(--teal);font-weight:700;' : '';
-    const rank = totalMetros - 24 + i;
+    const rank = totalMetros - i;
     return `<tr><td style="text-align:left;">${rank}</td><td style="text-align:left;${style}">${r.region.replace(' metro area', '')}${isOurs ? ' *' : ''}</td><td><span class="stat-badge pos">${r.pctPending.toFixed(1)}%</span></td><td>${r.cancellations.toLocaleString()}</td></tr>`;
   }).join('');
 
@@ -1316,15 +1381,23 @@ function renderTamu() {
 
   document.getElementById('tamu-market-label').textContent = short.toUpperCase() + ' - ' + periodLabel.toUpperCase();
 
-  // KPIs
+  // KPIs - compute YoY from 12 months back
   const mom = (field) => prev && prev[field] ? (latest[field] - prev[field]) / prev[field] : null;
+  // Find same month last year
+  const latestD = new Date(latest.date + 'T00:00:00');
+  const yoyDate = new Date(latestD.getFullYear() - 1, latestD.getMonth(), 1).toISOString().slice(0, 10);
+  const yoyRow = mktData.find(r => r.date === yoyDate);
+  const yoy = (field) => yoyRow && yoyRow[field] ? (latest[field] - yoyRow[field]) / yoyRow[field] : null;
+  const fmtYoyPct = (v) => v != null ? (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%' : '-';
+  const yoyCls2 = (v) => v != null ? (v >= 0 ? 'pos' : 'neg') : 'neu';
+
   const kpis = [
-    { label: 'Median Price', val: '$' + latest.medPrice.toLocaleString(), yoyStr: latest.salesYoy != null ? '' : '', yoy: null, mom: mom('medPrice'), accent: color },
-    { label: 'Sales', val: latest.sales.toLocaleString(), yoyStr: latest.salesYoy != null ? (latest.salesYoy >= 0 ? '+' : '') + (latest.salesYoy * 100).toFixed(1) + '%' : '-', yoyCls: latest.salesYoy != null ? (latest.salesYoy >= 0 ? 'pos' : 'neg') : 'neu', mom: mom('sales'), accent: '#34d399' },
-    { label: 'Active Listings', val: latest.activeListings.toLocaleString(), yoy: null, yoyStr: '', mom: mom('activeListings'), accent: '#a78bfa' },
-    { label: 'Months Inventory', val: latest.monthsInv.toFixed(2), yoy: null, yoyStr: '', mom: mom('monthsInv'), accent: '#f97316' },
-    { label: 'Avg Price', val: '$' + latest.avgPrice.toLocaleString(), yoy: null, yoyStr: '', mom: mom('avgPrice'), accent: '#facc15' },
-    { label: 'Dollar Volume', val: '$' + (latest.dollarVol / 1e9).toFixed(2) + 'B', yoyStr: latest.dollarVolYoy != null ? (latest.dollarVolYoy >= 0 ? '+' : '') + (latest.dollarVolYoy * 100).toFixed(1) + '%' : '-', yoyCls: latest.dollarVolYoy != null ? (latest.dollarVolYoy >= 0 ? 'pos' : 'neg') : 'neu', mom: mom('dollarVol'), accent: '#e879f9' },
+    { label: 'Median Price', val: '$' + latest.medPrice.toLocaleString(), yoyStr: fmtYoyPct(yoy('medPrice')), yoyCls: yoyCls2(yoy('medPrice')), mom: mom('medPrice'), momPrev: prev ? '$' + prev.medPrice.toLocaleString() : '', yoyPrev: yoyRow ? '$' + yoyRow.medPrice.toLocaleString() : '', accent: color },
+    { label: 'Sales', val: latest.sales.toLocaleString(), yoyStr: fmtYoyPct(latest.salesYoy), yoyCls: yoyCls2(latest.salesYoy), mom: mom('sales'), momPrev: prev ? prev.sales.toLocaleString() : '', yoyPrev: yoyRow ? yoyRow.sales.toLocaleString() : '', accent: '#34d399' },
+    { label: 'Active Listings', val: latest.activeListings.toLocaleString(), yoyStr: fmtYoyPct(yoy('activeListings')), yoyCls: yoyCls2(yoy('activeListings')), mom: mom('activeListings'), momPrev: prev ? prev.activeListings.toLocaleString() : '', yoyPrev: yoyRow ? yoyRow.activeListings.toLocaleString() : '', accent: '#a78bfa' },
+    { label: 'Months Inventory', val: latest.monthsInv.toFixed(2), yoyStr: fmtYoyPct(yoy('monthsInv')), yoyCls: yoyCls2(yoy('monthsInv')), mom: mom('monthsInv'), momPrev: prev ? prev.monthsInv.toFixed(2) : '', yoyPrev: yoyRow ? yoyRow.monthsInv.toFixed(2) : '', accent: '#f97316' },
+    { label: 'Avg Price', val: '$' + latest.avgPrice.toLocaleString(), yoyStr: fmtYoyPct(yoy('avgPrice')), yoyCls: yoyCls2(yoy('avgPrice')), mom: mom('avgPrice'), momPrev: prev ? '$' + prev.avgPrice.toLocaleString() : '', yoyPrev: yoyRow ? '$' + yoyRow.avgPrice.toLocaleString() : '', accent: '#facc15' },
+    { label: 'Dollar Volume', val: '$' + (latest.dollarVol / 1e9).toFixed(2) + 'B', yoyStr: fmtYoyPct(latest.dollarVolYoy), yoyCls: yoyCls2(latest.dollarVolYoy), mom: mom('dollarVol'), accent: '#e879f9' },
   ];
   document.getElementById('tamu-kpi-grid').innerHTML = kpis.map(k => kpiCard(k)).join('');
 
@@ -1559,14 +1632,12 @@ async function init() {
     loadEl.style.display = 'none';
 
     // Phase 2: Load state + metro in background
-    const stateIds = new Set(Object.keys(TARGET_STATES));
-    const stateNames = new Set(Object.values(TARGET_STATES));
     fetchCSV('State', CSV_SOURCES.state).then(stateText => {
       if (stateText) {
-        const filtered = parseCSVFiltered(stateText, r => stateIds.has(r.state_id) || stateNames.has(r.state));
-        processStates(filtered);
+        const allRows = parseCSV(stateText);
+        processStates(allRows);
         if (currentGeo !== 'us') renderOverview(currentGeo);
-        updateStatus('State', 'ok', 'Ready (' + filtered.length + ' rows)');
+        updateStatus('State', 'ok', 'Ready (' + allRows.length + ' rows)');
       }
     }).catch(e => console.warn('State load error:', e));
 
