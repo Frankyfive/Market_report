@@ -104,7 +104,10 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <h1>MARKET INTELLIGENCE REPORT</h1>
     <div class="sub">Realtor.com Live Data | Auto-updating | <span id="header-date"></span></div>
   </div>
-  <div class="badge">Cairn Analytics</div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button onclick="forceRefresh()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;font-size:9px;cursor:pointer;font-weight:600;" title="Clear browser cache and reload all data">Force Refresh</button>
+    <div class="badge">Cairn Analytics</div>
+  </div>
 </div>
 
 <div class="status-bar" id="status-bar"></div>
@@ -1585,6 +1588,25 @@ async function loadCancelFromRepo() {
       console.log('Cancel: loaded ' + (added || data.length) + ' entries from repo');
     }
   } catch(e) { /* repo file doesn't exist yet */ }
+}
+
+// ============================================================
+// Force Refresh
+// ============================================================
+async function forceRefresh() {
+  if (!confirm('This will clear all cached CSV data and reload from the server. Manual MBA entries and uploaded Redfin/TAMU data will be preserved. Continue?')) return;
+  try {
+    const tx = db.transaction('csv_cache', 'readwrite');
+    const store = tx.objectStore('csv_cache');
+    // Only clear CSV caches, preserve manual uploads
+    const keysToDelete = ['National', 'State', 'Metro'];
+    for (const k of keysToDelete) { store.delete(k); }
+    tx.oncomplete = () => { location.reload(); };
+  } catch(e) {
+    // Fallback: delete entire DB
+    indexedDB.deleteDatabase(DB_NAME);
+    location.reload();
+  }
 }
 
 // ============================================================
