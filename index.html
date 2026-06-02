@@ -119,6 +119,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <div class="tab" onclick="showPage('mba',this)">MBA Purchase Index</div>
   <div class="tab" onclick="showPage('cancel',this)">Contract Cancellations</div>
   <div class="tab" onclick="showPage('txhousing',this)">Texas Housing</div>
+  <div class="tab" onclick="showPage('rftracker',this)">Redfin Tracker</div>
 </div>
 
 <!-- NATIONAL OVERVIEW -->
@@ -382,6 +383,84 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   </div>
 
   <div class="mba-note">Source: Texas Real Estate Research Center at Texas A&M University | trerc.tamu.edu</div>
+</div>
+
+<!-- REDFIN TRACKER -->
+<div class="page" id="page-rftracker">
+  <div class="section-title" style="margin-top:4px;">REDFIN MARKET TRACKER</div>
+
+  <!-- Upload areas -->
+  <div class="mba-card" style="border-color:var(--teal);border-style:dashed;margin-bottom:16px;padding:12px 16px;">
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
+      <div style="flex:1;min-width:200px;">
+        <div style="color:var(--text);font-size:11px;font-weight:600;margin-bottom:4px;">Upload Redfin CSVs</div>
+        <div style="color:var(--muted);font-size:9px;">Housing Market (redfin_housing), Buyers/Sellers (redfin_buyers), Delistings (redfin_delist). Select multiple files at once.</div>
+      </div>
+      <label class="btn-add" style="cursor:pointer;">Choose CSV(s)<input type="file" accept=".csv" multiple id="rf-upload" onchange="handleRfUpload(event)" style="display:none;"/></label>
+      <button class="btn-add" style="background:var(--purple);font-size:9px;padding:5px 12px;" onclick="exportRfJson()">Export JSON</button>
+      <span style="color:var(--muted);font-size:9px;" id="rf-file-info"></span>
+    </div>
+  </div>
+
+  <!-- Region selector -->
+  <div style="margin-bottom:14px;"><div class="geo-btns" id="rf-region-btns"></div></div>
+
+  <!-- HOUSING MARKET SECTION -->
+  <div class="section-title" id="rf-hm-label">HOUSING MARKET</div>
+  <div class="kpi-grid" id="rf-hm-kpis"></div>
+  <div class="charts-grid" style="margin-bottom:20px;">
+    <div class="chart-card"><div class="chart-title">Homes Sold</div><div class="chart-wrap"><canvas id="rf-ch-sold"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Homes Sold YoY%</div><div class="chart-wrap"><canvas id="rf-ch-sold-yoy"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Pending Sales</div><div class="chart-wrap"><canvas id="rf-ch-pending"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Pending Sales YoY%</div><div class="chart-wrap"><canvas id="rf-ch-pending-yoy"></canvas></div></div>
+  </div>
+
+  <!-- Regional comparison table -->
+  <div class="mba-card" style="margin-bottom:20px;">
+    <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:10px;" id="rf-hm-table-title">Housing Market by Region</div>
+    <div style="overflow-x:auto;">
+    <table class="metro-table">
+      <thead><tr><th>Region</th><th>Homes Sold</th><th>YoY</th><th>Pending</th><th>YoY</th><th>Med. Price</th><th>YoY</th><th>New Listings</th><th>YoY</th><th>Active</th><th>YoY</th></tr></thead>
+      <tbody id="rf-hm-tbody"></tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- BUYERS & SELLERS SECTION -->
+  <div class="section-title">BALANCE OF POWER: BUYERS & SELLERS</div>
+  <div class="kpi-grid" id="rf-bs-kpis"></div>
+  <div class="charts-grid" style="margin-bottom:20px;">
+    <div class="chart-card"><div class="chart-title">Buyer-Seller Ratio</div><div class="chart-wrap"><canvas id="rf-ch-ratio"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Seller-Buyer % Difference</div><div class="chart-wrap"><canvas id="rf-ch-diff"></canvas></div></div>
+  </div>
+  <div class="mba-card" style="margin-bottom:20px;">
+    <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:10px;" id="rf-bs-table-title">Buyers & Sellers by Region</div>
+    <div style="overflow-x:auto;">
+    <table class="metro-table">
+      <thead><tr><th>Region</th><th>Status</th><th>Buyers</th><th>YoY</th><th>Sellers</th><th>YoY</th><th>B/S Ratio</th><th>YoY</th><th>S-B Diff</th><th>YoY (pp)</th></tr></thead>
+      <tbody id="rf-bs-tbody"></tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- DELISTINGS / RELISTINGS SECTION -->
+  <div class="section-title">DELISTINGS & RELISTINGS</div>
+  <div class="kpi-grid" id="rf-dl-kpis"></div>
+  <div class="charts-grid" style="margin-bottom:20px;">
+    <div class="chart-card"><div class="chart-title">Share Delisted (%)</div><div class="chart-wrap"><canvas id="rf-ch-delist"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Share Relisted (%)</div><div class="chart-wrap"><canvas id="rf-ch-relist"></canvas></div></div>
+  </div>
+  <div class="mba-card" style="margin-bottom:20px;">
+    <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:10px;" id="rf-dl-table-title">Delistings & Relistings by Region</div>
+    <div style="overflow-x:auto;">
+    <table class="metro-table">
+      <thead><tr><th>Region</th><th>Delistings</th><th>YoY</th><th>% Delisted</th><th>YoY (pp)</th><th>Relistings</th><th>YoY</th><th>% Relisted</th><th>YoY (pp)</th></tr></thead>
+      <tbody id="rf-dl-tbody"></tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="mba-note">Source: Redfin Data Center | Housing Market, Buyers & Sellers, Delistings & Relistings</div>
 </div>
 
 <div class="footer">
@@ -1042,6 +1121,7 @@ function showPage(name, el) {
   if (name === 'mba') setTimeout(() => renderMba(), 50);
   if (name === 'cancel') setTimeout(() => renderCancellations(), 50);
   if (name === 'txhousing') setTimeout(() => renderTamu(), 50);
+  if (name === 'rftracker') setTimeout(() => renderRfTracker(), 50);
 }
 
 // ============================================================
@@ -1591,6 +1671,344 @@ async function loadCancelFromRepo() {
 }
 
 // ============================================================
+// REDFIN TRACKER (Housing Market, Buyers & Sellers, Delistings)
+// ============================================================
+const STATE_TO_REGION = {
+  'Texas':'south','Florida':'south','Georgia':'south','North Carolina':'south','South Carolina':'south',
+  'Virginia':'south','Tennessee':'south','Alabama':'south','Mississippi':'south','Louisiana':'south',
+  'Arkansas':'south','Kentucky':'south','West Virginia':'south','Oklahoma':'south','Maryland':'south',
+  'Columbia':'south','Delaware':'south',
+  'Colorado':'mountain','Utah':'mountain','Arizona':'mountain','Nevada':'mountain','New Mexico':'mountain',
+  'Idaho':'mountain','Montana':'mountain','Wyoming':'mountain',
+  'California':'west','Washington':'west','Oregon':'west','Hawaii':'west','Alaska':'west',
+  'Illinois':'midwest','Wisconsin':'midwest','Ohio':'midwest','Michigan':'midwest','Indiana':'midwest',
+  'Minnesota':'midwest','Iowa':'midwest','Missouri':'midwest','North Dakota':'midwest',
+  'South Dakota':'midwest','Nebraska':'midwest','Kansas':'midwest',
+  'New York':'northeast','Pennsylvania':'northeast','New Jersey':'northeast','Connecticut':'northeast',
+  'Massachusetts':'northeast','Maine':'northeast','New Hampshire':'northeast','Vermont':'northeast',
+  'Rhode Island':'northeast'
+};
+const RF_REGION_LABELS = { south:'South', mountain:'Mountain', west:'West', midwest:'Midwest', northeast:'Northeast', national:'National' };
+const RF_REGION_COLORS = { national:'#38bdf8', south:'#f87171', mountain:'#a78bfa', west:'#34d399', midwest:'#facc15', northeast:'#e879f9' };
+
+let rfHousingData = [];
+let rfBuyersData = [];
+let rfDelistData = [];
+let currentRfRegion = 'national';
+
+async function handleRfUpload(event) {
+  const files = event.target.files;
+  if (!files.length) return;
+  let info = [];
+  for (const file of files) {
+    const fn = file.name.toLowerCase();
+    const text = await file.text();
+    const parsed = Papa.parse(text.trim(), { header: true, skipEmptyLines: true, dynamicTyping: false });
+    if (fn.includes('redfin_housing')) {
+      const added = mergeRfData(rfHousingData, parsed.data, 'hm');
+      info.push('Housing: +' + added);
+    } else if (fn.includes('redfin_buyers')) {
+      const added = mergeRfData(rfBuyersData, parsed.data, 'bs');
+      info.push('Buyers: +' + added);
+    } else if (fn.includes('redfin_delist')) {
+      const added = mergeRfData(rfDelistData, parsed.data, 'dl');
+      info.push('Delist: +' + added);
+    } else {
+      info.push(file.name + ': unrecognized');
+    }
+  }
+  await saveRfCache();
+  document.getElementById('rf-file-info').textContent = info.join(' | ');
+  showToast('Loaded: ' + info.join(', '));
+  renderRfTracker();
+}
+
+function mergeRfData(arr, rows, type) {
+  const seen = new Set(arr.map(r => r.key));
+  let added = 0;
+  for (const row of rows) {
+    const region = row['REGION NAME'];
+    const period = row['PERIOD BEGIN'];
+    if (!region || !period) continue;
+    const key = region + '|' + period + '|' + (row['PROPERTY TYPE'] || '');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    let r;
+    if (type === 'hm') {
+      r = { key, region, period, regionType: row['REGION TYPE'],
+        homesSold: pf(row['HOMES SOLD']), homesSoldYoy: pf(row['HOMES SOLD YOY (%)']),
+        pendingSales: pf(row['PENDING SALES']), pendingYoy: pf(row['PENDING SALES YOY (%)']),
+        medPrice: pf(row['MEDIAN SALE PRICE NSA ($)']), medPriceYoy: pf(row['MEDIAN SALE PRICE NSA YOY (%)']),
+        newListings: pf(row['NEW LISTINGS']), newListingsYoy: pf(row['NEW LISTINGS YOY (%)']),
+        active: pf(row['ACTIVE LISTINGS']), activeYoy: pf(row['ACTIVE LISTINGS YOY (%)']),
+        dom: pf(row['MEDIAN DAYS ON MARKET (DAYS)']), domYoy: pf(row['MEDIAN DAYS ON MARKET YOY (%)'])
+      };
+    } else if (type === 'bs') {
+      r = { key, region, period, propType: row['PROPERTY TYPE'] || 'All Residential',
+        balance: row['BALANCE OF POWER'] || '',
+        buyers: pf(row['BUYERS']), buyersYoy: pf(row['BUYERS YOY (%)']),
+        sellers: pf(row['SELLERS']), sellersYoy: pf(row['SELLERS YOY (%)']),
+        bsRatio: pf(row['BUYER-SELLER RATIO']), bsRatioYoy: pf(row['BUYER-SELLER RATIO YOY (%)']),
+        sbDiff: pf(row['SELLER-BUYER % DIFFERENCE']), sbDiffYoy: pf(row['SELLER-BUYER % DIFFERENCE YOY (PPTS)'])
+      };
+    } else {
+      r = { key, region, period, regionType: row['REGION TYPE'],
+        delistings: pf(row['TOTAL DELISTINGS']), delistYoy: pf(row['TOTAL DELISTINGS YOY (%)']),
+        relistings: pf(row['TOTAL RELISTINGS']), relistYoy: pf(row['TOTAL RELISTINGS YOY (%)']),
+        delistShare: pf(row['SHARE OF LISTINGS DELISTED (%)']), delistShareYoy: pf(row['SHARE OF LISTINGS DELISTED YOY (PPTS)']),
+        relistShare: pf(row['SHARE OF LISTINGS RELISTED (%)']), relistShareYoy: pf(row['SHARE OF LISTINGS RELISTED YOY (PPTS)'])
+      };
+    }
+    arr.push(r);
+    added++;
+  }
+  return added;
+}
+
+function pf(v) { if (v == null || v === '' || v === 'NA') return null; const n = parseFloat(String(v).replace(/,/g,'')); return isNaN(n) ? null : n; }
+
+async function saveRfCache() {
+  await dbPut('csv_cache', 'rf_housing', { data: rfHousingData, ts: Date.now() });
+  await dbPut('csv_cache', 'rf_buyers', { data: rfBuyersData, ts: Date.now() });
+  await dbPut('csv_cache', 'rf_delist', { data: rfDelistData, ts: Date.now() });
+}
+
+async function loadRfData() {
+  try {
+    let c = await dbGet('csv_cache', 'rf_housing'); if (c?.data) rfHousingData = c.data;
+    c = await dbGet('csv_cache', 'rf_buyers'); if (c?.data) rfBuyersData = c.data;
+    c = await dbGet('csv_cache', 'rf_delist'); if (c?.data) rfDelistData = c.data;
+    const total = rfHousingData.length + rfBuyersData.length + rfDelistData.length;
+    if (total) document.getElementById('rf-file-info').textContent = total + ' rows cached';
+  } catch(e) {}
+}
+
+async function loadRfFromRepo() {
+  for (const [key, arr, prop] of [['rf_housing', rfHousingData, 'rfHousingData'], ['rf_buyers', rfBuyersData, 'rfBuyersData'], ['rf_delist', rfDelistData, 'rfDelistData']]) {
+    try {
+      const resp = await fetch(MANUAL_BASE + '/' + key + '.json', { signal: AbortSignal.timeout(5000) });
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      if (!Array.isArray(data)) continue;
+      const seen = new Set(arr.map(r => r.key));
+      for (const r of data) { if (!seen.has(r.key)) { seen.add(r.key); arr.push(r); } }
+    } catch(e) {}
+  }
+}
+
+function exportRfJson() {
+  const all = { housing: rfHousingData, buyers: rfBuyersData, delist: rfDelistData };
+  const blob = new Blob([JSON.stringify(all)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'rf_tracker.json'; a.click();
+  showToast('Exported Redfin tracker data');
+}
+
+function aggregateRegion(data, region, sumFields, avgFields) {
+  // Filter states for this region
+  let filtered;
+  if (region === 'national') {
+    filtered = data.filter(r => r.regionType === 'State');
+  } else {
+    filtered = data.filter(r => STATE_TO_REGION[r.region] === region);
+  }
+  if (!filtered.length) return [];
+  // Group by period
+  const byPeriod = {};
+  filtered.forEach(r => { if (!byPeriod[r.period]) byPeriod[r.period] = []; byPeriod[r.period].push(r); });
+  const periods = Object.keys(byPeriod).sort();
+  return periods.map(p => {
+    const group = byPeriod[p];
+    const obj = { period: p };
+    sumFields.forEach(f => { obj[f] = group.reduce((s, r) => s + (r[f] || 0), 0); });
+    avgFields.forEach(f => { const vals = group.map(r => r[f]).filter(v => v != null); obj[f] = vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null; });
+    return obj;
+  });
+}
+
+function renderRfTracker() {
+  buildRfRegionBtns();
+  renderRfHousing();
+  renderRfBuyers();
+  renderRfDelist();
+}
+
+function buildRfRegionBtns() {
+  const regions = ['national','south','mountain','west','midwest','northeast'];
+  document.getElementById('rf-region-btns').innerHTML = regions.map(r => {
+    const active = r === currentRfRegion;
+    const c = RF_REGION_COLORS[r];
+    const style = active ? `background:${c};color:#0f172a;border-color:${c}` : '';
+    return `<button class="geo-btn ${active?'active':''}" style="${style}" onclick="selectRfRegion('${r}',this)">${RF_REGION_LABELS[r]}</button>`;
+  }).join('');
+}
+
+function selectRfRegion(r) { currentRfRegion = r; renderRfTracker(); }
+
+function renderRfHousing() {
+  if (!rfHousingData.length) return;
+  const color = RF_REGION_COLORS[currentRfRegion];
+  const sumF = ['homesSold','pendingSales','newListings','active'];
+  const avgF = ['homesSoldYoy','pendingYoy','medPrice','medPriceYoy','newListingsYoy','activeYoy','dom','domYoy'];
+  const agg = aggregateRegion(rfHousingData, currentRfRegion, sumF, avgF);
+  if (!agg.length) return;
+
+  const latest = agg[agg.length - 1];
+  const prev = agg.length > 1 ? agg[agg.length - 2] : null;
+  const pd = new Date(latest.period + 'T00:00:00');
+  document.getElementById('rf-hm-label').textContent = 'HOUSING MARKET - ' + RF_REGION_LABELS[currentRfRegion].toUpperCase() + ' - ' + pd.toLocaleDateString('en-US',{month:'long',year:'numeric'}).toUpperCase();
+
+  const fY = v => v != null ? (v > 0 ? '+' : '') + v.toFixed(1) + '%' : '-';
+  const yC = v => v != null ? (v > 0 ? 'pos' : 'neg') : 'neu';
+  const kpis = [
+    { label:'Homes Sold', val: latest.homesSold?.toLocaleString() || '-', yoyStr: fY(latest.homesSoldYoy), yoyCls: yC(latest.homesSoldYoy), mom: prev?.homesSold ? (latest.homesSold-prev.homesSold)/prev.homesSold : null, accent: color },
+    { label:'Pending Sales', val: latest.pendingSales?.toLocaleString() || '-', yoyStr: fY(latest.pendingYoy), yoyCls: yC(latest.pendingYoy), mom: prev?.pendingSales ? (latest.pendingSales-prev.pendingSales)/prev.pendingSales : null, accent:'#34d399' },
+    { label:'Med. Sale Price', val: latest.medPrice ? '$'+Math.round(latest.medPrice).toLocaleString() : '-', yoyStr: fY(latest.medPriceYoy), yoyCls: yC(latest.medPriceYoy), mom: prev?.medPrice ? (latest.medPrice-prev.medPrice)/prev.medPrice : null, accent:'#a78bfa' },
+    { label:'New Listings', val: latest.newListings?.toLocaleString() || '-', yoyStr: fY(latest.newListingsYoy), yoyCls: yC(latest.newListingsYoy), mom: prev?.newListings ? (latest.newListings-prev.newListings)/prev.newListings : null, accent:'#f97316' },
+    { label:'Active Listings', val: latest.active?.toLocaleString() || '-', yoyStr: fY(latest.activeYoy), yoyCls: yC(latest.activeYoy), mom: prev?.active ? (latest.active-prev.active)/prev.active : null, accent:'#facc15' },
+  ];
+  document.getElementById('rf-hm-kpis').innerHTML = kpis.map(k => kpiCard(k)).join('');
+
+  // Charts
+  const labels = agg.map(r => { const d = new Date(r.period+'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
+  mkChart('rf-ch-sold', labels, ds(agg.map(r => r.homesSold), color, false));
+  mkChart('rf-ch-sold-yoy', labels, ds(agg.map(r => r.homesSoldYoy), '#f87171', false));
+  mkChart('rf-ch-pending', labels, ds(agg.map(r => r.pendingSales), '#34d399', false));
+  mkChart('rf-ch-pending-yoy', labels, ds(agg.map(r => r.pendingYoy), '#a78bfa', false));
+
+  // Regional comparison table
+  const latestPeriod = agg[agg.length-1].period;
+  const regions = ['national','south','mountain','west','midwest','northeast'];
+  const tableRows = regions.map(reg => {
+    const rAgg = aggregateRegion(rfHousingData, reg, sumF, avgF);
+    const row = rAgg.find(r => r.period === latestPeriod);
+    if (!row) return '';
+    const c = RF_REGION_COLORS[reg];
+    return `<tr>
+      <td style="border-left:3px solid ${c}">${RF_REGION_LABELS[reg]}</td>
+      <td>${row.homesSold?.toLocaleString()||'-'}</td><td class="yoy-cell ${yC(row.homesSoldYoy)}">${fY(row.homesSoldYoy)}</td>
+      <td>${row.pendingSales?.toLocaleString()||'-'}</td><td class="yoy-cell ${yC(row.pendingYoy)}">${fY(row.pendingYoy)}</td>
+      <td>${row.medPrice?'$'+Math.round(row.medPrice).toLocaleString():'-'}</td><td class="yoy-cell ${yC(row.medPriceYoy)}">${fY(row.medPriceYoy)}</td>
+      <td>${row.newListings?.toLocaleString()||'-'}</td><td class="yoy-cell ${yC(row.newListingsYoy)}">${fY(row.newListingsYoy)}</td>
+      <td>${row.active?.toLocaleString()||'-'}</td><td class="yoy-cell ${yC(row.activeYoy)}">${fY(row.activeYoy)}</td>
+    </tr>`;
+  });
+  document.getElementById('rf-hm-table-title').textContent = 'Housing Market by Region - ' + pd.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  document.getElementById('rf-hm-tbody').innerHTML = tableRows.join('');
+}
+
+function renderRfBuyers() {
+  if (!rfBuyersData.length) return;
+  // Buyers data is already at Census Region level
+  const regionMap = { 'South Region':'south', 'Midwest Region':'midwest', 'West Region':'west', 'Northeast Region':'northeast' };
+  const allRes = rfBuyersData.filter(r => r.propType === 'All Residential');
+  const periods = [...new Set(allRes.map(r => r.period))].sort();
+  const latestPeriod = periods[periods.length - 1];
+  const pd = new Date(latestPeriod + 'T00:00:00');
+
+  // KPIs for selected region
+  let regionName;
+  if (currentRfRegion === 'national') { regionName = null; }
+  else { regionName = Object.keys(regionMap).find(k => regionMap[k] === currentRfRegion); }
+
+  const latestAll = allRes.filter(r => r.period === latestPeriod);
+  const selectedRow = regionName ? latestAll.find(r => r.region === regionName) : null;
+
+  if (selectedRow) {
+    const fY = v => v != null ? (v > 0 ? '+' : '') + v.toFixed(1) + '%' : '-';
+    const yC = v => v != null ? (v > 0 ? 'pos' : 'neg') : 'neu';
+    const kpis = [
+      { label:'Balance of Power', val: selectedRow.balance || '-', yoyStr:'', yoyCls:'neu', mom:null, accent: RF_REGION_COLORS[currentRfRegion] },
+      { label:'Buyers', val: selectedRow.buyers?.toLocaleString()||'-', yoyStr: fY(selectedRow.buyersYoy), yoyCls: yC(selectedRow.buyersYoy), mom:null, accent:'#34d399' },
+      { label:'Sellers', val: selectedRow.sellers?.toLocaleString()||'-', yoyStr: fY(selectedRow.sellersYoy), yoyCls: yC(selectedRow.sellersYoy), mom:null, accent:'#f87171' },
+      { label:'B/S Ratio', val: selectedRow.bsRatio?.toFixed(2)||'-', yoyStr: fY(selectedRow.bsRatioYoy), yoyCls: yC(selectedRow.bsRatioYoy), mom:null, accent:'#a78bfa' },
+      { label:'S-B Difference', val: selectedRow.sbDiff != null ? selectedRow.sbDiff.toFixed(1)+'%' : '-', yoyStr: selectedRow.sbDiffYoy != null ? (selectedRow.sbDiffYoy>0?'+':'')+selectedRow.sbDiffYoy.toFixed(1)+'pp':'-', yoyCls: yC(selectedRow.sbDiffYoy), mom:null, accent:'#facc15' },
+    ];
+    document.getElementById('rf-bs-kpis').innerHTML = kpis.map(k => kpiCard(k)).join('');
+  } else {
+    document.getElementById('rf-bs-kpis').innerHTML = '<div style="color:var(--muted);font-size:11px;">Select a specific region for KPIs (Buyers & Sellers data is at census region level)</div>';
+  }
+
+  // Charts - show all regions
+  const regionKeys = Object.keys(regionMap);
+  const labels = periods.map(p => { const d = new Date(p+'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
+
+  const ratioDS = regionKeys.map(rn => {
+    const rk = regionMap[rn];
+    const byPeriod = {}; allRes.filter(r => r.region === rn).forEach(r => byPeriod[r.period] = r);
+    return { label: RF_REGION_LABELS[rk], data: periods.map(p => byPeriod[p]?.bsRatio ?? null), borderColor: RF_REGION_COLORS[rk], backgroundColor:'transparent', fill:false, tension:.35, pointRadius:2, borderWidth:2 };
+  });
+
+  const diffDS = regionKeys.map(rn => {
+    const rk = regionMap[rn];
+    const byPeriod = {}; allRes.filter(r => r.region === rn).forEach(r => byPeriod[r.period] = r);
+    return { label: RF_REGION_LABELS[rk], data: periods.map(p => byPeriod[p]?.sbDiff ?? null), borderColor: RF_REGION_COLORS[rk], backgroundColor:'transparent', fill:false, tension:.35, pointRadius:2, borderWidth:2 };
+  });
+
+  if (charts['rf-ch-ratio']) charts['rf-ch-ratio'].destroy();
+  const ctx1 = document.getElementById('rf-ch-ratio');
+  if (ctx1) charts['rf-ch-ratio'] = new Chart(ctx1, { type:'line', data:{labels,datasets:ratioDS}, options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{boxWidth:12,padding:8,color:'#94a3b8',font:{size:9}}}},scales:{x:{grid:{color:'#1e293b'},ticks:{font:{size:9}}},y:{grid:{color:'#1e3a5f'},ticks:{font:{size:9}}}}} });
+
+  if (charts['rf-ch-diff']) charts['rf-ch-diff'].destroy();
+  const ctx2 = document.getElementById('rf-ch-diff');
+  if (ctx2) charts['rf-ch-diff'] = new Chart(ctx2, { type:'line', data:{labels,datasets:diffDS}, options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{boxWidth:12,padding:8,color:'#94a3b8',font:{size:9}}}},scales:{x:{grid:{color:'#1e293b'},ticks:{font:{size:9}}},y:{grid:{color:'#1e3a5f'},ticks:{font:{size:9},callback:v=>v+'%'}}}} });
+
+  // Table
+  const fY = v => v != null ? (v > 0 ? '+' : '') + v.toFixed(1) + '%' : '-';
+  const yC = v => v != null ? (v > 0 ? 'pos' : 'neg') : 'neu';
+  document.getElementById('rf-bs-table-title').textContent = 'Buyers & Sellers - ' + pd.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  document.getElementById('rf-bs-tbody').innerHTML = latestAll.map(r => {
+    const rk = regionMap[r.region] || 'national';
+    const c = RF_REGION_COLORS[rk] || '#94a3b8';
+    return `<tr><td style="border-left:3px solid ${c}">${r.region}</td><td><span class="stat-badge ${r.balance==='Buyers Market'?'pos':r.balance==='Sellers Market'?'neg':'neu'}">${r.balance}</span></td><td>${r.buyers?.toLocaleString()||'-'}</td><td class="yoy-cell ${yC(r.buyersYoy)}">${fY(r.buyersYoy)}</td><td>${r.sellers?.toLocaleString()||'-'}</td><td class="yoy-cell ${yC(r.sellersYoy)}">${fY(r.sellersYoy)}</td><td>${r.bsRatio?.toFixed(2)||'-'}</td><td class="yoy-cell ${yC(r.bsRatioYoy)}">${fY(r.bsRatioYoy)}</td><td>${r.sbDiff!=null?r.sbDiff.toFixed(1)+'%':'-'}</td><td class="yoy-cell ${yC(r.sbDiffYoy)}">${r.sbDiffYoy!=null?(r.sbDiffYoy>0?'+':'')+r.sbDiffYoy.toFixed(1)+'pp':'-'}</td></tr>`;
+  }).join('');
+}
+
+function renderRfDelist() {
+  if (!rfDelistData.length) return;
+  const color = RF_REGION_COLORS[currentRfRegion];
+  const sumF = ['delistings','relistings'];
+  const avgF = ['delistYoy','relistYoy','delistShare','delistShareYoy','relistShare','relistShareYoy'];
+  const agg = aggregateRegion(rfDelistData, currentRfRegion, sumF, avgF);
+  if (!agg.length) return;
+
+  const latest = agg[agg.length - 1];
+  const pd = new Date(latest.period + 'T00:00:00');
+  const fY = v => v != null ? (v > 0 ? '+' : '') + v.toFixed(1) + '%' : '-';
+  const yC = v => v != null ? (v > 0 ? 'pos' : 'neg') : 'neu';
+
+  const kpis = [
+    { label:'Total Delistings', val: latest.delistings?.toLocaleString()||'-', yoyStr: fY(latest.delistYoy), yoyCls: yC(latest.delistYoy), mom:null, accent: color },
+    { label:'% Delisted', val: latest.delistShare != null ? latest.delistShare.toFixed(2)+'%' : '-', yoyStr: latest.delistShareYoy != null ? (latest.delistShareYoy>0?'+':'')+latest.delistShareYoy.toFixed(2)+'pp' : '-', yoyCls: yC(latest.delistShareYoy), mom:null, accent:'#f87171' },
+    { label:'Total Relistings', val: latest.relistings?.toLocaleString()||'-', yoyStr: fY(latest.relistYoy), yoyCls: yC(latest.relistYoy), mom:null, accent:'#34d399' },
+    { label:'% Relisted', val: latest.relistShare != null ? latest.relistShare.toFixed(2)+'%' : '-', yoyStr: latest.relistShareYoy != null ? (latest.relistShareYoy>0?'+':'')+latest.relistShareYoy.toFixed(2)+'pp' : '-', yoyCls: yC(latest.relistShareYoy), mom:null, accent:'#a78bfa' },
+  ];
+  document.getElementById('rf-dl-kpis').innerHTML = kpis.map(k => kpiCard(k)).join('');
+
+  // Charts
+  const labels = agg.map(r => { const d = new Date(r.period+'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
+  mkChart('rf-ch-delist', labels, ds(agg.map(r => r.delistShare), '#f87171', false), false, true);
+  mkChart('rf-ch-relist', labels, ds(agg.map(r => r.relistShare), '#34d399', false), false, true);
+
+  // Regional comparison table
+  const latestPeriod = latest.period;
+  const regions = ['national','south','mountain','west','midwest','northeast'];
+  document.getElementById('rf-dl-table-title').textContent = 'Delistings & Relistings - ' + pd.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  document.getElementById('rf-dl-tbody').innerHTML = regions.map(reg => {
+    const rAgg = aggregateRegion(rfDelistData, reg, sumF, avgF);
+    const row = rAgg.find(r => r.period === latestPeriod);
+    if (!row) return '';
+    const c = RF_REGION_COLORS[reg];
+    return `<tr>
+      <td style="border-left:3px solid ${c}">${RF_REGION_LABELS[reg]}</td>
+      <td>${row.delistings?.toLocaleString()||'-'}</td><td class="yoy-cell ${yC(row.delistYoy)}">${fY(row.delistYoy)}</td>
+      <td>${row.delistShare!=null?row.delistShare.toFixed(2)+'%':'-'}</td><td class="yoy-cell ${yC(row.delistShareYoy)}">${row.delistShareYoy!=null?(row.delistShareYoy>0?'+':'')+row.delistShareYoy.toFixed(2)+'pp':'-'}</td>
+      <td>${row.relistings?.toLocaleString()||'-'}</td><td class="yoy-cell ${yC(row.relistYoy)}">${fY(row.relistYoy)}</td>
+      <td>${row.relistShare!=null?row.relistShare.toFixed(2)+'%':'-'}</td><td class="yoy-cell ${yC(row.relistShareYoy)}">${row.relistShareYoy!=null?(row.relistShareYoy>0?'+':'')+row.relistShareYoy.toFixed(2)+'pp':'-'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
 // Force Refresh
 // ============================================================
 async function forceRefresh() {
@@ -1652,6 +2070,10 @@ async function init() {
     // Load TAMU housing data
     await loadTamuData();
     await loadTamuFromRepo();
+
+    // Load Redfin tracker data
+    await loadRfData();
+    await loadRfFromRepo();
 
     if (DATA.us?.latest) {
       document.getElementById('header-date').textContent = yyyymmToLabel(DATA.us.latest.date);
