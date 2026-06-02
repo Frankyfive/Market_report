@@ -26,15 +26,13 @@ jobs:
             "https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Country_History.csv"
           echo "National: $(wc -l < data/cache/us_history.csv) rows"
 
-      - name: Download State CSV - filter to TX and CO only
+      - name: Download State CSV
         run: |
-          curl -sL "https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_State_History.csv" | \
-            head -1 > data/cache/state_history.csv
-          curl -sL "https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_State_History.csv" | \
-            grep -E ",TX,|,CO," >> data/cache/state_history.csv
-          echo "State (filtered): $(wc -l < data/cache/state_history.csv) rows"
+          curl -sL -o data/cache/state_history.csv \
+            "https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_State_History.csv"
+          echo "State: $(wc -l < data/cache/state_history.csv) rows"
 
-      - name: Download Metro CSV - filter to target metros only
+      - name: Download Metro CSV - filter to target metros
         run: |
           FULL=$(curl -sL "https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Metro_History.csv")
           echo "$FULL" | head -1 > data/cache/metro_history.csv
@@ -49,7 +47,7 @@ jobs:
 
       - name: Record timestamp
         run: |
-          echo "{\"last_updated\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"files\": [\"us_history.csv\",\"state_history.csv\",\"metro_history.csv\",\"weekly_inventory.csv\"]}" > data/cache/manifest.json
+          echo "{\"last_updated\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > data/cache/manifest.json
 
       - name: Commit and push
         run: |
