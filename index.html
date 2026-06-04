@@ -478,12 +478,12 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 const REPO_BASE = 'https://frankyfive.github.io/Market_report/data/cache';
 const CSV_SOURCES = {
   us: {
-    live: REPO_BASE + '/us_history.csv',
-    fallback: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Country_History.csv'
+    live: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Country_History.csv',
+    fallback: REPO_BASE + '/us_history.csv'
   },
   state: {
-    live: REPO_BASE + '/state_history.csv',
-    fallback: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_State_History.csv'
+    live: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_State_History.csv',
+    fallback: REPO_BASE + '/state_history.csv'
   },
   metro: {
     live: REPO_BASE + '/metro_history.csv',
@@ -2012,16 +2012,15 @@ function renderRfDelist() {
 // Force Refresh
 // ============================================================
 async function forceRefresh() {
-  if (!confirm('This will clear all cached CSV data and reload from the server. Manual MBA entries and uploaded Redfin/TAMU data will be preserved. Continue?')) return;
+  if (!confirm('This will clear cached Realtor.com data and reload fresh from the server. Uploaded Redfin/TAMU data will be preserved. Continue?')) return;
   try {
     const tx = db.transaction('csv_cache', 'readwrite');
     const store = tx.objectStore('csv_cache');
-    // Only clear CSV caches, preserve manual uploads
-    const keysToDelete = ['National', 'State', 'Metro'];
-    for (const k of keysToDelete) { store.delete(k); }
+    // Only clear auto-fetched CSV caches
+    const autoKeys = ['National', 'State', 'Metro'];
+    for (const k of autoKeys) { store.delete(k); }
     tx.oncomplete = () => { location.reload(); };
   } catch(e) {
-    // Fallback: delete entire DB
     indexedDB.deleteDatabase(DB_NAME);
     location.reload();
   }
