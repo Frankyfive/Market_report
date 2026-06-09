@@ -2075,8 +2075,8 @@ function renderRfDelist() {
 // ============================================================
 // ECONOMIC INDICATORS (FRED)
 // ============================================================
-const FRED_KEY = '52bf8872722b27bbe06e26e23295c78f';
-const FRED_BASE = 'https://api.stlouisfed.org/fred/series/observations';
+const FRED_KEY = ''; // API key moved to GitHub Actions
+const FRED_CACHE_BASE = 'https://frankyfive.github.io/Market_report/data/cache/fred';
 const RECESSIONS = [
   { start: '1990-07-01', end: '1991-03-01', label: '1990-91' },
   { start: '2001-03-01', end: '2001-11-01', label: '2001' },
@@ -2106,36 +2106,20 @@ let econLoaded = false;
 
 async function fetchFredSeries(id) {
   const cacheKey = 'fred_' + id;
-  // Check cache
   try {
     const cached = await dbGet('csv_cache', cacheKey);
-    if (cached && (Date.now() - cached.ts) < 86400000) return cached.data; // 24hr cache
+    if (cached && (Date.now() - cached.ts) < 86400000) return cached.data;
   } catch(e) {}
-
   try {
-    const url = `${FRED_BASE}?series_id=${id}&api_key=${FRED_KEY}&file_type=json&observation_start=1988-01-01`;
-    console.log('FRED fetching:', id);
-    const resp = await fetch(url, { signal: AbortSignal.timeout(15000) });
-    if (!resp.ok) {
-      const errText = await resp.text().catch(() => '');
-      console.error('FRED HTTP error:', id, resp.status, errText.substring(0, 200));
-      throw new Error('HTTP ' + resp.status);
-    }
-    const json = await resp.json();
-    if (!json.observations) {
-      console.error('FRED no observations:', id, JSON.stringify(json).substring(0, 200));
-      throw new Error('No observations in response');
-    }
-    const data = json.observations
-      .filter(o => o.value !== '.')
-      .map(o => ({ date: o.date, value: parseFloat(o.value) }));
-    console.log('FRED loaded:', id, data.length, 'points');
+    const url = `${FRED_CACHE_BASE}/${id}.json`;
+    const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
     await dbPut('csv_cache', cacheKey, { data, ts: Date.now() });
     return data;
   } catch(e) {
     console.warn('FRED fetch failed:', id, e.message);
-    // Try cache even if stale
-    try { const c = await dbGet('csv_cache', cacheKey); if (c?.data) { console.log('FRED using stale cache:', id); return c.data; } } catch(e2) {}
+    try { const c = await dbGet('csv_cache', cacheKey); if (c?.data) return c.data; } catch(e2) {}
     return [];
   }
 }

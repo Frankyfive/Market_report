@@ -17,8 +17,8 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create data directory
-        run: mkdir -p data/cache
+      - name: Create data directories
+        run: mkdir -p data/cache data/cache/fred
 
       - name: Download National CSV
         run: |
@@ -45,6 +45,26 @@ jobs:
             "https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/listing_weekly_core_aggregate_by_country.csv"
           echo "Weekly: $(wc -l < data/cache/weekly_inventory.csv) rows"
 
+      - name: Fetch FRED economic data
+        env:
+          FRED_API_KEY: "52bf8872722b27bbe06e26e23295c78f"
+        run: |
+          SERIES="MORTGAGE30US DRCCLACBS DRSFRMACBS DRBLACBS DRALACBS UMCSENT MICH STLFSI4 UNRATE CPIAUCSL RRVRUSQ156N PAYEMS W875RX1 INDPRO RRSFS A792RC0A052NBEA"
+          for S in $SERIES; do
+            echo "Fetching $S..."
+            RAW=$(curl -sL "https://api.stlouisfed.org/fred/series/observations?series_id=${S}&api_key=${FRED_API_KEY}&file_type=json&observation_start=1988-01-01")
+            # Extract observations and convert to simple [{date,value}] JSON
+            echo "$RAW" | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          obs = [{'date': o['date'], 'value': float(o['value'])} for o in data.get('observations', []) if o['value'] != '.']
+          print(json.dumps(obs))
+          " > data/cache/fred/${S}.json
+            COUNT=$(python3 -c "import json; print(len(json.load(open('data/cache/fred/${S}.json'))))")
+            echo "  $S: $COUNT observations"
+            sleep 1
+          done
+
       - name: Record timestamp
         run: |
           echo "{\"last_updated\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > data/cache/manifest.json
@@ -54,5 +74,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/cache/
-          git diff --staged --quiet || git commit -m "Cache Realtor.com CSVs - $(date -u +%Y-%m-%d)"
+          git diff --staged --quiet || git commit -m "Cache Realtor.com CSVs + FRED - $(date -u +%Y-%m-%d)"
           git push
