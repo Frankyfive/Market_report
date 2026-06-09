@@ -120,6 +120,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <div class="tab" onclick="showPage('cancel',this)">Contract Cancellations</div>
   <div class="tab" onclick="showPage('txhousing',this)">Texas Housing</div>
   <div class="tab" onclick="showPage('rftracker',this)">Redfin Tracker</div>
+  <div class="tab" onclick="showPage('econ',this)">Economic Indicators</div>
 </div>
 
 <!-- NATIONAL OVERVIEW -->
@@ -461,6 +462,68 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   </div>
 
   <div class="mba-note">Source: Redfin Data Center | Housing Market, Buyers & Sellers, Delistings & Relistings</div>
+</div>
+
+<!-- ECONOMIC INDICATORS (FRED) -->
+<div class="page" id="page-econ">
+  <div class="section-title" style="margin-top:4px;">ECONOMIC INDICATORS - FEDERAL RESERVE (FRED)</div>
+  <div style="color:var(--muted);font-size:9px;margin-bottom:16px;">Gray bands indicate recession periods: 1990-91, 2001, 2007-09. Data from Federal Reserve Bank of St. Louis. Cached 24h.</div>
+
+  <!-- Loading indicator -->
+  <div id="econ-loading" style="text-align:center;padding:40px;color:var(--muted);display:none;">
+    <div class="spinner" style="margin:0 auto 12px;"></div>
+    <div id="econ-loading-msg">Loading FRED data...</div>
+  </div>
+
+  <!-- LOANS & AFFORDABILITY -->
+  <div class="section-title">LOANS & CONSUMER AFFORDABILITY</div>
+  <div class="kpi-grid" id="econ-loans-kpis"></div>
+  <div class="chart-card" style="margin-bottom:14px;"><div class="chart-title">30-Year Fixed Mortgage Rate (%)</div><div class="chart-wrap" style="height:220px;"><canvas id="econ-mortgage"></canvas></div></div>
+  <div class="charts-grid" style="margin-bottom:22px;">
+    <div class="chart-card"><div class="chart-title">Credit Card Delinquency (%)</div><div class="chart-wrap"><canvas id="econ-cc"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Single-Family Home Delinquency (%)</div><div class="chart-wrap"><canvas id="econ-sfh"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Business Loan Delinquency (%)</div><div class="chart-wrap"><canvas id="econ-biz"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Auto Loan Delinquency (%)</div><div class="chart-wrap"><canvas id="econ-auto"></canvas></div></div>
+  </div>
+
+  <!-- AMERICAN LIFESTYLE -->
+  <div class="section-title">AMERICAN LIFESTYLE</div>
+  <div class="kpi-grid" id="econ-life-kpis"></div>
+  <div class="charts-grid" style="margin-bottom:14px;">
+    <div class="chart-card"><div class="chart-title">Consumer Sentiment (UMich)</div><div class="chart-wrap"><canvas id="econ-sent"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Inflation Expectations (%)</div><div class="chart-wrap"><canvas id="econ-infl"></canvas></div></div>
+  </div>
+  <div class="charts-grid" style="margin-bottom:14px;">
+    <div class="chart-card"><div class="chart-title">Financial Stress Index</div><div class="chart-wrap"><canvas id="econ-stress"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Unemployment Rate (%)</div><div class="chart-wrap"><canvas id="econ-unemp"></canvas></div></div>
+  </div>
+  <div class="charts-grid" style="margin-bottom:22px;">
+    <div class="chart-card"><div class="chart-title">Consumer Price Index (CPI)</div><div class="chart-wrap"><canvas id="econ-cpi"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Rental Vacancy Rate (%)</div><div class="chart-wrap"><canvas id="econ-vacancy"></canvas></div></div>
+  </div>
+
+  <!-- RECESSION INDICATORS -->
+  <div class="section-title">RECESSION INDICATORS</div>
+  <div class="kpi-grid" id="econ-recess-kpis"></div>
+  <div class="charts-grid" style="margin-bottom:14px;">
+    <div class="chart-card"><div class="chart-title">Non-Farm Payrolls (thousands)</div><div class="chart-wrap"><canvas id="econ-payroll"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Real Personal Income (index)</div><div class="chart-wrap"><canvas id="econ-income"></canvas></div></div>
+  </div>
+  <div class="charts-grid" style="margin-bottom:14px;">
+    <div class="chart-card"><div class="chart-title">Industrial Production (index)</div><div class="chart-wrap"><canvas id="econ-indprod"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Real Retail Sales ($M)</div><div class="chart-wrap"><canvas id="econ-retail"></canvas></div></div>
+  </div>
+
+  <!-- Legend -->
+  <div class="mba-card" style="padding:10px 16px;">
+    <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:10px;color:var(--muted);">
+      <span><span style="display:inline-block;width:30px;height:10px;background:rgba(148,163,184,.15);border:1px solid rgba(148,163,184,.3);vertical-align:middle;margin-right:4px;"></span> Recession Period</span>
+      <span>1990-91: Gulf War Recession</span>
+      <span>2001: Dot-com Bust</span>
+      <span>2007-09: Great Financial Crisis</span>
+    </div>
+  </div>
+  <div class="mba-note" style="margin-top:10px;">Source: Federal Reserve Bank of St. Louis (FRED) | fred.stlouisfed.org</div>
 </div>
 
 <div class="footer">
@@ -1122,6 +1185,7 @@ function showPage(name, el) {
   if (name === 'cancel') setTimeout(() => renderCancellations(), 50);
   if (name === 'txhousing') setTimeout(() => renderTamu(), 50);
   if (name === 'rftracker') setTimeout(() => renderRfTracker(), 50);
+  if (name === 'econ') setTimeout(() => loadAndRenderEcon(), 50);
 }
 
 // ============================================================
@@ -2006,6 +2070,189 @@ function renderRfDelist() {
       <td>${row.relistShare!=null?row.relistShare.toFixed(2)+'%':'-'}</td><td class="yoy-cell ${yC(row.relistShareYoy)}">${row.relistShareYoy!=null?(row.relistShareYoy>0?'+':'')+row.relistShareYoy.toFixed(2)+'pp':'-'}</td>
     </tr>`;
   }).join('');
+}
+
+// ============================================================
+// ECONOMIC INDICATORS (FRED)
+// ============================================================
+const FRED_KEY = '52bf8872722b27bbe06e26e23295c78f';
+const FRED_BASE = 'https://api.stlouisfed.org/fred/series/observations';
+const RECESSIONS = [
+  { start: '1990-07-01', end: '1991-03-01', label: '1990-91' },
+  { start: '2001-03-01', end: '2001-11-01', label: '2001' },
+  { start: '2007-12-01', end: '2009-06-01', label: '2007-09' }
+];
+const FRED_SERIES = [
+  { id:'MORTGAGE30US', label:'30Y Mortgage', unit:'%', chart:'econ-mortgage', section:'loans', color:'#38bdf8' },
+  { id:'DRCCLACBS', label:'Credit Card Delinq.', unit:'%', chart:'econ-cc', section:'loans', color:'#f87171' },
+  { id:'DRSFRMACBS', label:'Home Delinq.', unit:'%', chart:'econ-sfh', section:'loans', color:'#34d399' },
+  { id:'DRBLACBS', label:'Business Delinq.', unit:'%', chart:'econ-biz', section:'loans', color:'#a78bfa' },
+  { id:'DRALACBS', label:'Auto Delinq.', unit:'%', chart:'econ-auto', section:'loans', color:'#f97316' },
+  { id:'UMCSENT', label:'Consumer Sentiment', unit:'idx', chart:'econ-sent', section:'life', color:'#38bdf8' },
+  { id:'MICH', label:'Inflation Expect.', unit:'%', chart:'econ-infl', section:'life', color:'#f87171' },
+  { id:'STLFSI4', label:'Financial Stress', unit:'idx', chart:'econ-stress', section:'life', color:'#f97316' },
+  { id:'UNRATE', label:'Unemployment', unit:'%', chart:'econ-unemp', section:'life', color:'#e879f9' },
+  { id:'CPIAUCSL', label:'CPI', unit:'idx', chart:'econ-cpi', section:'life', color:'#34d399' },
+  { id:'RRVRUSQ156N', label:'Rental Vacancy', unit:'%', chart:'econ-vacancy', section:'life', color:'#facc15' },
+  { id:'PAYEMS', label:'Non-Farm Payrolls', unit:'K', chart:'econ-payroll', section:'recess', color:'#38bdf8' },
+  { id:'W875RX1', label:'Real Personal Income', unit:'idx', chart:'econ-income', section:'recess', color:'#34d399' },
+  { id:'INDPRO', label:'Industrial Prod.', unit:'idx', chart:'econ-indprod', section:'recess', color:'#a78bfa' },
+  { id:'RRSFS', label:'Real Retail Sales', unit:'$M', chart:'econ-retail', section:'recess', color:'#f97316' },
+  { id:'A792RC0A052NBEA', label:'Per Capita Income', unit:'$', chart:null, section:'life', color:'#facc15' }
+];
+
+let fredData = {}; // { seriesId: [{ date, value }] }
+let econLoaded = false;
+
+async function fetchFredSeries(id) {
+  const cacheKey = 'fred_' + id;
+  // Check cache
+  try {
+    const cached = await dbGet('csv_cache', cacheKey);
+    if (cached && (Date.now() - cached.ts) < 86400000) return cached.data; // 24hr cache
+  } catch(e) {}
+
+  try {
+    const url = `${FRED_BASE}?series_id=${id}&api_key=${FRED_KEY}&file_type=json&observation_start=1988-01-01`;
+    const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const json = await resp.json();
+    const data = (json.observations || [])
+      .filter(o => o.value !== '.')
+      .map(o => ({ date: o.date, value: parseFloat(o.value) }));
+    await dbPut('csv_cache', cacheKey, { data, ts: Date.now() });
+    return data;
+  } catch(e) {
+    console.warn('FRED fetch failed:', id, e.message);
+    // Try cache even if stale
+    try { const c = await dbGet('csv_cache', cacheKey); if (c?.data) return c.data; } catch(e2) {}
+    return [];
+  }
+}
+
+async function loadAndRenderEcon() {
+  if (econLoaded && Object.keys(fredData).length > 0) { renderEcon(); return; }
+
+  const loadEl = document.getElementById('econ-loading');
+  const loadMsg = document.getElementById('econ-loading-msg');
+  loadEl.style.display = 'block';
+
+  // Fetch in batches of 4 to avoid rate limits
+  for (let i = 0; i < FRED_SERIES.length; i += 4) {
+    const batch = FRED_SERIES.slice(i, i + 4);
+    loadMsg.textContent = `Loading ${i + 1}-${Math.min(i + 4, FRED_SERIES.length)} of ${FRED_SERIES.length} series...`;
+    const results = await Promise.all(batch.map(s => fetchFredSeries(s.id)));
+    batch.forEach((s, j) => { fredData[s.id] = results[j]; });
+  }
+
+  econLoaded = true;
+  loadEl.style.display = 'none';
+  renderEcon();
+}
+
+// Recession band drawing plugin
+const recessionPlugin = {
+  id: 'recessionBands',
+  beforeDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea || !scales.x) return;
+    ctx.save();
+    RECESSIONS.forEach(r => {
+      const x1 = scales.x.getPixelForValue(r.start);
+      const x2 = scales.x.getPixelForValue(r.end);
+      if (x2 < chartArea.left || x1 > chartArea.right) return;
+      const left = Math.max(x1, chartArea.left);
+      const right = Math.min(x2, chartArea.right);
+      ctx.fillStyle = 'rgba(148,163,184,0.1)';
+      ctx.fillRect(left, chartArea.top, right - left, chartArea.bottom - chartArea.top);
+      ctx.strokeStyle = 'rgba(148,163,184,0.2)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(left, chartArea.top, right - left, chartArea.bottom - chartArea.top);
+    });
+    ctx.restore();
+  }
+};
+
+function mkEconChart(canvasId, data, color, unit) {
+  if (!data || !data.length) return;
+  if (charts[canvasId]) charts[canvasId].destroy();
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+
+  const labels = data.map(d => d.date);
+  const values = data.map(d => d.value);
+
+  charts[canvasId] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{
+      data: values, borderColor: color, backgroundColor: color + '15',
+      fill: true, tension: .3, pointRadius: 0, pointHoverRadius: 4, borderWidth: 1.5
+    }]},
+    plugins: [recessionPlugin],
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor:'#1e293b', borderColor:'#334155', borderWidth:1 } },
+      scales: {
+        x: { type: 'category', grid: { color:'#1e293b' }, ticks: { maxTicksLimit: 8, maxRotation: 0, font: { size: 8 },
+          callback: function(val, i) { const d = this.getLabelForValue(i); return d ? d.substring(0,4) : ''; }
+        }},
+        y: { grid: { color:'#1e3a5f' }, ticks: { font: { size: 9 },
+          callback: v => unit === '$' ? '$' + (v/1000).toFixed(0) + 'K' : unit === '$M' ? '$' + (v/1000).toFixed(0) + 'B' : unit === 'K' ? (v/1000).toFixed(0) + 'M' : v
+        }}
+      }
+    }
+  });
+}
+
+function renderEcon() {
+  // KPI builder
+  function econKpi(series) {
+    const d = fredData[series.id];
+    if (!d || !d.length) return '';
+    const latest = d[d.length - 1];
+    const prev = d.length > 1 ? d[d.length - 2] : null;
+    let valStr;
+    if (series.unit === '$') valStr = '$' + Math.round(latest.value).toLocaleString();
+    else if (series.unit === '$M') valStr = '$' + (latest.value / 1000).toFixed(1) + 'B';
+    else if (series.unit === 'K') valStr = (latest.value / 1000).toFixed(1) + 'M';
+    else if (series.unit === '%') valStr = latest.value.toFixed(2) + '%';
+    else valStr = latest.value.toFixed(1);
+
+    const change = prev ? latest.value - prev.value : null;
+    const chgStr = change != null ? (change >= 0 ? '+' : '') + change.toFixed(2) : '';
+    const posWhenUp = ['UMCSENT','PAYEMS','W875RX1','INDPRO','RRSFS','A792RC0A052NBEA','CPIAUCSL'];
+    const chgCls = change != null ? (posWhenUp.includes(series.id) ? (change >= 0 ? 'pos' : 'neg') : (change <= 0 ? 'pos' : 'neg')) : 'neu';
+    const dateStr = latest.date;
+
+    return `<div class="kpi-card" style="--accent:${series.color}">
+      <div class="kpi-label">${series.label}</div>
+      <div class="kpi-value" style="font-size:18px;">${valStr}</div>
+      <div class="kpi-changes">
+        <div class="kpi-row"><span class="kpi-row-lbl">Chg</span><span class="${chgCls}">${chgStr}</span></div>
+        <div class="kpi-row"><span class="kpi-row-lbl" style="min-width:auto;">${dateStr}</span></div>
+      </div>
+    </div>`;
+  }
+
+  // Loans KPIs
+  const loanSeries = FRED_SERIES.filter(s => s.section === 'loans');
+  document.getElementById('econ-loans-kpis').innerHTML = loanSeries.map(s => econKpi(s)).join('');
+
+  // Life KPIs
+  const lifeSeries = FRED_SERIES.filter(s => s.section === 'life');
+  document.getElementById('econ-life-kpis').innerHTML = lifeSeries.map(s => econKpi(s)).join('');
+
+  // Recession KPIs
+  const recessSeries = FRED_SERIES.filter(s => s.section === 'recess');
+  document.getElementById('econ-recess-kpis').innerHTML = recessSeries.map(s => econKpi(s)).join('');
+
+  // Charts
+  FRED_SERIES.forEach(s => {
+    if (s.chart && fredData[s.id]) {
+      mkEconChart(s.chart, fredData[s.id], s.color, s.unit);
+    }
+  });
 }
 
 // ============================================================
