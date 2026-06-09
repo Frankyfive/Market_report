@@ -2114,18 +2114,28 @@ async function fetchFredSeries(id) {
 
   try {
     const url = `${FRED_BASE}?series_id=${id}&api_key=${FRED_KEY}&file_type=json&observation_start=1988-01-01`;
-    const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    console.log('FRED fetching:', id);
+    const resp = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!resp.ok) {
+      const errText = await resp.text().catch(() => '');
+      console.error('FRED HTTP error:', id, resp.status, errText.substring(0, 200));
+      throw new Error('HTTP ' + resp.status);
+    }
     const json = await resp.json();
-    const data = (json.observations || [])
+    if (!json.observations) {
+      console.error('FRED no observations:', id, JSON.stringify(json).substring(0, 200));
+      throw new Error('No observations in response');
+    }
+    const data = json.observations
       .filter(o => o.value !== '.')
       .map(o => ({ date: o.date, value: parseFloat(o.value) }));
+    console.log('FRED loaded:', id, data.length, 'points');
     await dbPut('csv_cache', cacheKey, { data, ts: Date.now() });
     return data;
   } catch(e) {
     console.warn('FRED fetch failed:', id, e.message);
     // Try cache even if stale
-    try { const c = await dbGet('csv_cache', cacheKey); if (c?.data) return c.data; } catch(e2) {}
+    try { const c = await dbGet('csv_cache', cacheKey); if (c?.data) { console.log('FRED using stale cache:', id); return c.data; } } catch(e2) {}
     return [];
   }
 }
@@ -2137,39 +2147,63 @@ async function loadAndRenderEcon() {
   const loadMsg = document.getElementById('econ-loading-msg');
   loadEl.style.display = 'block';
 
+  let successCount = 0;
+  let failCount = 0;
+
   // Fetch in batches of 4 to avoid rate limits
   for (let i = 0; i < FRED_SERIES.length; i += 4) {
     const batch = FRED_SERIES.slice(i, i + 4);
     loadMsg.textContent = `Loading ${i + 1}-${Math.min(i + 4, FRED_SERIES.length)} of ${FRED_SERIES.length} series...`;
     const results = await Promise.all(batch.map(s => fetchFredSeries(s.id)));
-    batch.forEach((s, j) => { fredData[s.id] = results[j]; });
+    batch.forEach((s, j) => {
+      fredData[s.id] = results[j];
+      if (results[j] && results[j].length > 0) successCount++;
+      else failCount++;
+    });
   }
 
   econLoaded = true;
   loadEl.style.display = 'none';
-  renderEcon();
+
+  if (successCount === 0) {
+    document.getElementById('econ-loans-kpis').innerHTML = '<div style="color:var(--red);font-size:12px;padding:20px;">Unable to load FRED data. Check browser console for errors. The FRED API may be temporarily unavailable.</div>';
+  } else {
+    if (failCount > 0) showToast(failCount + ' series failed to load');
+    renderEcon();
+  }
 }
 
 // Recession band drawing plugin
 const recessionPlugin = {
   id: 'recessionBands',
   beforeDraw(chart) {
-    const { ctx, chartArea, scales } = chart;
-    if (!chartArea || !scales.x) return;
-    ctx.save();
-    RECESSIONS.forEach(r => {
-      const x1 = scales.x.getPixelForValue(r.start);
-      const x2 = scales.x.getPixelForValue(r.end);
-      if (x2 < chartArea.left || x1 > chartArea.right) return;
-      const left = Math.max(x1, chartArea.left);
-      const right = Math.min(x2, chartArea.right);
-      ctx.fillStyle = 'rgba(148,163,184,0.1)';
-      ctx.fillRect(left, chartArea.top, right - left, chartArea.bottom - chartArea.top);
-      ctx.strokeStyle = 'rgba(148,163,184,0.2)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(left, chartArea.top, right - left, chartArea.bottom - chartArea.top);
-    });
-    ctx.restore();
+    try {
+      const { ctx, chartArea, scales } = chart;
+      if (!chartArea || !scales.x) return;
+      const labels = chart.data.labels || [];
+      if (!labels.length) return;
+      ctx.save();
+      RECESSIONS.forEach(r => {
+        // Find closest label indices for recession start/end
+        let startIdx = -1, endIdx = -1;
+        for (let i = 0; i < labels.length; i++) {
+          if (labels[i] >= r.start && startIdx === -1) startIdx = i;
+          if (labels[i] <= r.end) endIdx = i;
+        }
+        if (startIdx === -1 || endIdx === -1 || endIdx < startIdx) return;
+        const x1 = scales.x.getPixelForValue(startIdx);
+        const x2 = scales.x.getPixelForValue(endIdx);
+        ctx.fillStyle = 'rgba(148,163,184,0.1)';
+        ctx.fillRect(x1, chartArea.top, x2 - x1, chartArea.bottom - chartArea.top);
+        ctx.strokeStyle = 'rgba(148,163,184,0.25)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(x1, chartArea.top); ctx.lineTo(x1, chartArea.bottom); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x2, chartArea.top); ctx.lineTo(x2, chartArea.bottom); ctx.stroke();
+        ctx.setLineDash([]);
+      });
+      ctx.restore();
+    } catch(e) { /* recession bands are decorative, don't break chart */ }
   }
 };
 
