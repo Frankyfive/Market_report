@@ -82,9 +82,11 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .loading-overlay p{color:var(--muted);font-size:12px;}
 .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px;}
 @keyframes spin{to{transform:rotate(360deg);}}
+.mba-hero-grid{display:grid;grid-template-columns:1fr 2fr;gap:16px;margin-bottom:20px;align-items:stretch;}
 @media(max-width:768px){
   .kpi-grid{grid-template-columns:repeat(2,1fr);}
   .charts-grid,.metro-charts-grid{grid-template-columns:1fr;}
+  .mba-hero-grid{grid-template-columns:1fr;}
   .tabs{gap:2px;padding:6px 12px 0;}
   .tab{padding:5px 10px;font-size:10px;}
   .page{padding:12px;}
@@ -213,36 +215,43 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 <div class="page" id="page-mba">
   <div class="section-title" style="margin-top:4px;">MBA PURCHASE INDEX - WEEKLY TRACKER</div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
-    <div class="mba-card" style="margin-bottom:0;">
-      <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:2px;">Latest Reading</div>
-      <div style="font-size:36px;font-weight:700;color:#fff;margin:6px 0;" id="mba-latest-val">-</div>
-      <div style="display:flex;gap:14px;margin-top:6px;" id="mba-latest-changes"></div>
-      <div style="color:var(--muted);font-size:10px;margin-top:8px;" id="mba-latest-date"></div>
-    </div>
-    <div class="mba-card" style="margin-bottom:0;">
-      <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:10px;">52-Week Range</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span style="color:var(--muted);font-size:10px;">Low</span>
-        <span style="color:var(--muted);font-size:10px;">High</span>
+  <div class="mba-hero-grid">
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="mba-card" style="margin-bottom:0;">
+        <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:2px;">Latest Reading</div>
+        <div style="font-size:36px;font-weight:700;color:#fff;margin:6px 0;" id="mba-latest-val">-</div>
+        <div style="display:flex;gap:14px;margin-top:6px;" id="mba-latest-changes"></div>
+        <div style="color:var(--muted);font-size:10px;margin-top:8px;" id="mba-latest-date"></div>
       </div>
-      <div style="position:relative;height:8px;background:#1e3a5f;border-radius:4px;margin-bottom:8px;" id="mba-range-bar"></div>
-      <div style="display:flex;justify-content:space-between;">
-        <span id="mba-low" style="font-weight:700;color:var(--red);font-size:14px;">-</span>
-        <span id="mba-high" style="font-weight:700;color:var(--green);font-size:14px;">-</span>
+      <div class="mba-card" style="margin-bottom:0;">
+        <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:10px;">52-Week Range</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <span style="color:var(--muted);font-size:10px;">Low</span>
+          <span style="color:var(--muted);font-size:10px;">High</span>
+        </div>
+        <div style="position:relative;height:8px;background:#1e3a5f;border-radius:4px;margin-bottom:8px;" id="mba-range-bar"></div>
+        <div style="display:flex;justify-content:space-between;">
+          <span id="mba-low" style="font-weight:700;color:var(--red);font-size:14px;">-</span>
+          <span id="mba-high" style="font-weight:700;color:var(--green);font-size:14px;">-</span>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="chart-card" style="margin-bottom:20px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-      <div class="chart-title" style="margin-bottom:0;" id="mba-chart-title">MBA Purchase Index - Full History <span class="chart-hint">&middot; click a point for details</span></div>
-      <div class="range-btns" id="mba-range-btns"></div>
+    <div class="chart-card" style="margin-bottom:0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div class="chart-title" style="margin-bottom:0;" id="mba-chart-title">MBA Purchase Index - Full History <span class="chart-hint">&middot; click a point for details</span></div>
+        <div class="range-btns" id="mba-range-btns"></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:16px 24px;">
+        <label class="toggle-row">
+          <input type="checkbox" id="mba-listings-toggle" onchange="renderMba()"/> Show Active Listings (count, monthly)
+        </label>
+        <label class="toggle-row">
+          <input type="checkbox" id="mba-rate-toggle" onchange="renderMba()"/> Show 30-Yr Mortgage Rate (%, weekly)
+        </label>
+      </div>
+      <div class="chart-wrap" style="height:260px;"><canvas id="mba-chart"></canvas></div>
     </div>
-    <label class="toggle-row">
-      <input type="checkbox" id="mba-inv-toggle" onchange="renderMba()"/> Show Realtor.com Active Listings (YoY %)
-    </label>
-    <div class="chart-wrap" style="height:220px;"><canvas id="mba-chart"></canvas></div>
   </div>
 
   <div class="mba-card">
@@ -352,15 +361,18 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <div style="margin-bottom:14px;"><div class="geo-btns" id="tamu-market-btns"></div></div>
 
   <!-- KPIs -->
-  <div class="section-title" id="tamu-market-label">TEXAS</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <div class="section-title" id="tamu-market-label" style="margin-bottom:0;">TEXAS</div>
+    <div class="range-btns" id="tamu-range-btns"></div>
+  </div>
   <div class="kpi-grid" id="tamu-kpi-grid"></div>
 
   <!-- Single market charts -->
   <div class="charts-grid" style="margin-bottom:16px;">
-    <div class="chart-card"><div class="chart-title">Median Price</div><div class="chart-wrap"><canvas id="tamu-ch-price"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Sales</div><div class="chart-wrap"><canvas id="tamu-ch-sales"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Active Listings</div><div class="chart-wrap"><canvas id="tamu-ch-active"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Months Inventory</div><div class="chart-wrap"><canvas id="tamu-ch-inv"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Median Price <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="tamu-ch-price"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Sales <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="tamu-ch-sales"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Active Listings <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="tamu-ch-active"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Months Inventory <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="tamu-ch-inv"></canvas></div></div>
   </div>
 
   <!-- Comparison table (moved below charts) -->
@@ -413,16 +425,19 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   </div>
 
   <!-- Region selector -->
-  <div style="margin-bottom:14px;"><div class="geo-btns" id="rf-region-btns"></div></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+    <div class="geo-btns" id="rf-region-btns"></div>
+    <div class="range-btns" id="rf-range-btns"></div>
+  </div>
 
   <!-- HOUSING MARKET SECTION -->
   <div class="section-title" id="rf-hm-label">HOUSING MARKET</div>
   <div class="kpi-grid" id="rf-hm-kpis"></div>
   <div class="charts-grid" style="margin-bottom:20px;">
-    <div class="chart-card"><div class="chart-title">Homes Sold</div><div class="chart-wrap"><canvas id="rf-ch-sold"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Homes Sold YoY%</div><div class="chart-wrap"><canvas id="rf-ch-sold-yoy"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Pending Sales</div><div class="chart-wrap"><canvas id="rf-ch-pending"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Pending Sales YoY%</div><div class="chart-wrap"><canvas id="rf-ch-pending-yoy"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Homes Sold <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="rf-ch-sold"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Homes Sold YoY% <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="rf-ch-sold-yoy"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Pending Sales <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="rf-ch-pending"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Pending Sales YoY% <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="rf-ch-pending-yoy"></canvas></div></div>
   </div>
 
   <!-- Regional comparison table -->
@@ -443,6 +458,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div class="chart-card"><div class="chart-title">Buyer-Seller Ratio</div><div class="chart-wrap"><canvas id="rf-ch-ratio"></canvas></div></div>
     <div class="chart-card"><div class="chart-title">Seller-Buyer % Difference</div><div class="chart-wrap"><canvas id="rf-ch-diff"></canvas></div></div>
   </div>
+  <div style="margin:-14px 0 20px;color:var(--muted);font-size:9px;font-style:italic;">Multi-region comparison charts — click-to-detail not available, use the table below for exact figures.</div>
   <div class="mba-card" style="margin-bottom:20px;">
     <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:10px;" id="rf-bs-table-title">Buyers & Sellers by Region</div>
     <div style="overflow-x:auto;">
@@ -457,8 +473,8 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <div class="section-title">DELISTINGS & RELISTINGS</div>
   <div class="kpi-grid" id="rf-dl-kpis"></div>
   <div class="charts-grid" style="margin-bottom:20px;">
-    <div class="chart-card"><div class="chart-title">Share Delisted (%)</div><div class="chart-wrap"><canvas id="rf-ch-delist"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Share Relisted (%)</div><div class="chart-wrap"><canvas id="rf-ch-relist"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Share Delisted (%) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="rf-ch-delist"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Share Relisted (%) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="rf-ch-relist"></canvas></div></div>
   </div>
   <div class="mba-card" style="margin-bottom:20px;">
     <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:10px;" id="rf-dl-table-title">Delistings & Relistings by Region</div>
@@ -475,7 +491,10 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 
 <!-- ECONOMIC INDICATORS (FRED) -->
 <div class="page" id="page-econ">
-  <div class="section-title" style="margin-top:4px;">ECONOMIC INDICATORS - FEDERAL RESERVE (FRED)</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <div class="section-title" style="margin-top:4px;">ECONOMIC INDICATORS - FEDERAL RESERVE (FRED)</div>
+    <div class="range-btns" id="econ-range-btns"></div>
+  </div>
   <div style="color:var(--muted);font-size:9px;margin-bottom:16px;">Gray bands indicate recession periods: 1990-91, 2001, 2007-09. Data from Federal Reserve Bank of St. Louis. Cached 24h.</div>
 
   <!-- Loading indicator -->
@@ -487,40 +506,40 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <!-- LOANS & AFFORDABILITY -->
   <div class="section-title">LOANS & CONSUMER AFFORDABILITY</div>
   <div class="kpi-grid" id="econ-loans-kpis"></div>
-  <div class="chart-card" style="margin-bottom:14px;"><div class="chart-title">30-Year Fixed Mortgage Rate (%)</div><div class="chart-wrap" style="height:220px;"><canvas id="econ-mortgage"></canvas></div></div>
+  <div class="chart-card" style="margin-bottom:14px;"><div class="chart-title">30-Year Fixed Mortgage Rate (%) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap" style="height:220px;"><canvas id="econ-mortgage"></canvas></div></div>
   <div class="charts-grid" style="margin-bottom:22px;">
-    <div class="chart-card"><div class="chart-title">Credit Card Delinquency (%)</div><div class="chart-wrap"><canvas id="econ-cc"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Single-Family Home Delinquency (%)</div><div class="chart-wrap"><canvas id="econ-sfh"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Business Loan Delinquency (%)</div><div class="chart-wrap"><canvas id="econ-biz"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">All Loan Delinquency (%)</div><div class="chart-wrap"><canvas id="econ-auto"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Credit Card Delinquency (%) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="econ-cc"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Single-Family Home Delinquency (%) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="econ-sfh"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Business Loan Delinquency (%) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="econ-biz"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">All Loan Delinquency (%) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="econ-auto"></canvas></div></div>
   </div>
 
   <!-- AMERICAN LIFESTYLE -->
   <div class="section-title">AMERICAN LIFESTYLE</div>
   <div class="kpi-grid" id="econ-life-kpis"></div>
   <div class="charts-grid" style="margin-bottom:14px;">
-    <div class="chart-card"><div class="chart-title">Consumer Sentiment (UMich)</div><div class="chart-wrap"><canvas id="econ-sent"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Inflation Expectations (%)</div><div class="chart-wrap"><canvas id="econ-infl"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Consumer Sentiment (UMich) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="econ-sent"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Inflation Expectations (%) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="econ-infl"></canvas></div></div>
   </div>
   <div class="charts-grid" style="margin-bottom:14px;">
-    <div class="chart-card"><div class="chart-title">Financial Stress Index</div><div class="chart-wrap"><canvas id="econ-stress"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Unemployment Rate (%)</div><div class="chart-wrap"><canvas id="econ-unemp"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Financial Stress Index <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="econ-stress"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Unemployment Rate (%) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="econ-unemp"></canvas></div></div>
   </div>
   <div class="charts-grid" style="margin-bottom:22px;">
-    <div class="chart-card"><div class="chart-title">Consumer Price Index (CPI)</div><div class="chart-wrap"><canvas id="econ-cpi"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Rental Vacancy Rate (%)</div><div class="chart-wrap"><canvas id="econ-vacancy"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Consumer Price Index (CPI) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="econ-cpi"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Rental Vacancy Rate (%) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="econ-vacancy"></canvas></div></div>
   </div>
 
   <!-- RECESSION INDICATORS -->
   <div class="section-title">RECESSION INDICATORS</div>
   <div class="kpi-grid" id="econ-recess-kpis"></div>
   <div class="charts-grid" style="margin-bottom:14px;">
-    <div class="chart-card"><div class="chart-title">Non-Farm Payrolls (thousands)</div><div class="chart-wrap"><canvas id="econ-payroll"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Real Personal Income (index)</div><div class="chart-wrap"><canvas id="econ-income"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Non-Farm Payrolls (thousands) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="econ-payroll"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Real Personal Income (index) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="econ-income"></canvas></div></div>
   </div>
   <div class="charts-grid" style="margin-bottom:14px;">
-    <div class="chart-card"><div class="chart-title">Industrial Production (index)</div><div class="chart-wrap"><canvas id="econ-indprod"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Real Retail Sales ($M)</div><div class="chart-wrap"><canvas id="econ-retail"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Industrial Production (index) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="econ-indprod"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Real Retail Sales ($M) <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="econ-retail"></canvas></div></div>
   </div>
 
   <!-- Legend -->
@@ -569,26 +588,8 @@ const CSV_SOURCES = {
   metro: {
     live: REPO_BASE + '/metro_history.csv',
     fallback: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/RDC_Inventory_Core_Metrics_Metro_History.csv'
-  },
-  weekly: {
-    live: 'https://econdata.s3-us-west-2.amazonaws.com/Reports/Core/listing_weekly_core_aggregate_by_country.csv',
-    fallback: REPO_BASE + '/weekly_inventory.csv'
   }
 };
-
-const INV_MONTHS = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
-function parseInvDate(s) {
-  const parts = (s || '').split('-');
-  if (parts.length !== 3 || !(parts[1] in INV_MONTHS)) return null;
-  return new Date(2000 + parseInt(parts[2], 10), INV_MONTHS[parts[1]], parseInt(parts[0], 10));
-}
-
-function processWeeklyInventory(rows) {
-  weeklyInventoryData = rows
-    .filter(r => r.geo_country === 'usa' && r.week_end_date)
-    .map(r => ({ date: parseInvDate(r.week_end_date), yy: parseFloat(r.active_listing_count_yy) }))
-    .filter(r => r.date && !isNaN(r.yy));
-}
 
 const TARGET_STATES = { TX: 'Texas', CO: 'Colorado' };
 const REGIONS = {
@@ -910,8 +911,6 @@ function processMetros(rows) {
 const MBA_SEED = [['9/17/2014',169.3],['9/24/2014',168.8],['10/1/2014',168.8],['10/8/2014',172.9],['10/15/2014',171.7],['10/22/2014',163.4],['10/29/2014',155.2],['11/5/2014',159.2],['11/12/2014',160.9],['11/19/2014',179.8],['11/26/2014',171.2],['12/3/2014',175.5],['12/10/2014',177.7],['12/17/2014',165.5],['12/24/2014',167.7],['1/7/2015',159.2],['1/14/2015',196.7],['1/21/2015',191.7],['1/28/2015',191.6],['2/4/2015',187.2],['2/11/2015',175.1],['2/18/2015',162.7],['2/25/2015',170.2],['3/4/2015',169.8],['3/11/2015',173.0],['3/18/2015',170.4],['3/25/2015',178.7],['4/1/2015',188.9],['4/8/2015',201.8],['4/15/2015',195.6],['4/22/2015',205.4],['4/29/2015',205.4],['5/6/2015',207.1],['5/13/2015',206.7],['5/20/2015',199.1],['5/27/2015',201.5],['6/3/2015',195.4],['6/10/2015',214.3],['6/17/2015',205.4],['6/24/2015',207.8],['7/1/2015',199.2],['7/8/2015',212.4],['7/15/2015',196.4],['7/22/2015',198.3],['7/29/2015',198.1],['8/5/2015',204.6],['8/12/2015',197.4],['8/19/2015',195.3],['8/26/2015',198.7],['9/2/2015',206.9],['9/9/2015',205.0],['9/16/2015',196.3],['9/23/2015',214.2],['9/30/2015',202.1],['10/7/2015',257.4],['10/14/2015',169.6],['10/21/2015',197.4],['10/28/2015',191.2],['11/4/2015',190.0],['11/11/2015',190.1],['11/18/2015',212.8],['11/25/2015',211.7],['12/2/2015',228.1],['12/9/2015',228.2],['12/16/2015',221.7],['12/23/2015',230.8],['1/6/2016',196.2],['1/13/2016',231.1],['1/20/2016',227.3],['1/27/2016',237.8],['2/3/2016',221.1],['2/10/2016',221.6],['2/17/2016',213.3],['2/24/2016',217.9],['3/2/2016',216.7],['3/9/2016',225.7],['3/16/2016',226.3],['3/23/2016',224.0],['3/30/2016',228.6],['4/6/2016',223.1],['4/13/2016',241.9],['4/20/2016',240.8],['4/27/2016',235.0],['5/4/2016',234.7],['5/11/2016',235.6],['5/18/2016',222.0],['5/25/2016',234.9],['6/1/2016',223.8],['6/8/2016',249.9],['6/15/2016',237.6],['6/22/2016',231.9],['6/29/2016',224.9],['7/6/2016',234.6],['7/13/2016',234.7],['7/20/2016',229.9],['7/27/2016',222.2],['8/3/2016',216.9],['8/10/2016',222.6],['8/17/2016',214.0],['8/24/2016',213.4],['8/31/2016',216.1],['9/7/2016',218.6],['9/14/2016',237.3],['9/21/2016',221.1],['9/28/2016',222.8],['10/5/2016',222.5],['10/12/2016',216.7],['10/19/2016',223.1],['10/26/2016',207.8],['11/2/2016',207.0],['11/9/2016',210.0],['11/16/2016',197.0],['11/23/2016',234.1],['11/30/2016',233.6],['12/7/2016',234.5],['12/14/2016',226.7],['12/21/2016',232.9],['1/4/2017',228.0],['1/11/2017',241.9],['1/18/2017',229.4],['1/25/2017',243.2],['2/1/2017',229.6],['2/8/2017',233.7],['2/15/2017',223.1],['2/22/2017',216.9],['3/1/2017',231.0],['3/8/2017',235.0],['3/15/2017',240.3],['3/22/2017',235.3],['3/29/2017',238.1],['4/5/2017',239.8],['4/12/2017',246.7],['4/19/2017',238.3],['4/26/2017',236.0],['5/3/2017',246.0],['5/10/2017',250.3],['5/17/2017',243.6],['5/24/2017',241.6],['5/31/2017',238.1],['6/7/2017',261.9],['6/14/2017',254.6],['6/21/2017',252.1],['6/28/2017',241.7],['7/6/2017',249.1],['7/12/2017',242.8],['7/19/2017',245.5],['7/26/2017',240.1],['8/2/2017',235.4],['8/9/2017',237.3],['8/16/2017',233.8],['8/23/2017',230.4],['8/30/2017',224.1],['9/6/2017',227.3],['9/13/2017',252.0],['9/20/2017',224.7],['9/27/2017',231.0],['10/4/2017',233.4],['10/11/2017',233.2],['10/18/2017',242.9],['10/25/2017',228.0],['11/1/2017',226.1],['11/8/2017',227.2],['11/15/2017',228.2],['11/22/2017',240.4],['11/29/2017',244.7],['12/6/2017',250.6],['12/13/2017',247.9],['12/20/2017',234.3],['1/3/2018',236.9],['1/10/2018',242.7],['1/17/2018',249.2],['1/24/2018',264.4],['1/31/2018',255.5],['2/7/2018',255.4],['2/14/2018',240.4],['2/21/2018',225.5],['2/28/2018',239.4],['3/7/2018',238.3],['3/14/2018',246.5],['3/21/2018',249.9],['3/28/2018',257.6],['4/4/2018',252.3],['4/11/2018',247.3],['4/18/2018',262.4],['4/25/2018',262.4],['5/2/2018',258.1],['5/9/2018',257.7],['5/16/2018',252.4],['5/23/2018',247.4],['5/30/2018',242.7],['6/6/2018',252.8],['6/13/2018',249.0],['6/20/2018',259.6],['6/27/2018',244.3],['7/4/2018',245.5],['7/11/2018',261.5],['7/18/2018',247.9],['7/25/2018',245.5],['8/1/2018',237.9],['8/8/2018',233.1],['8/15/2018',225.5],['8/22/2018',232.1],['8/29/2018',230.1],['9/5/2018',231.4],['9/12/2018',233.5],['9/19/2018',234.2],['9/26/2018',240.4],['10/3/2018',240.7],['10/10/2018',238.0],['10/17/2018',224.0],['10/24/2018',228.4],['10/31/2018',224.9],['11/7/2018',213.6],['11/14/2018',220.8],['11/21/2018',227.7],['11/28/2018',247.8],['12/5/2018',249.9],['12/12/2018',256.1],['12/19/2018',238.6],['1/3/2019',219.0],['1/9/2019',255.2],['1/16/2019',278.5],['1/23/2019',272.5],['1/30/2019',266.2],['2/6/2019',253.1],['2/13/2019',237.7],['2/20/2019',232.7],['2/27/2019',247.0],['3/6/2019',240.5],['3/13/2019',250.8],['3/20/2019',251.5],['3/27/2019',267.5],['4/3/2019',276.6],['4/10/2019',278.1],['4/17/2019',280.7],['4/24/2019',269.3],['5/1/2019',259.4],['5/8/2019',270.2],['5/15/2019',268.5],['5/22/2019',263.0],['5/29/2019',259.4],['6/5/2019',253.1],['6/12/2019',278.4],['6/19/2019',268.6],['6/26/2019',266.3],['7/3/2019',269.3],['7/10/2019',275.6],['7/17/2019',265.1],['7/24/2019',260.8],['7/31/2019',253.0],['8/7/2019',247.9],['8/14/2019',252.6],['8/21/2019',243.8],['8/28/2019',234.1],['9/4/2019',242.6],['9/11/2019',253.5],['9/18/2019',269.7],['9/25/2019',261.4],['10/2/2019',263.8],['10/9/2019',252.2],['10/16/2019',250.6],['10/23/2019',241.7],['10/30/2019',247.2],['11/6/2019',241.0],['11/13/2019',253.4],['11/20/2019',270.4],['11/27/2019',267.1],['12/4/2019',269.4],['12/11/2019',268.3],['12/18/2019',262.6],['12/26/2019',250.1],['1/8/2020',263.2],['1/15/2020',303.9],['1/22/2020',297.8],['1/29/2020',313.7],['2/5/2020',283.8],['2/12/2020',267.4],['2/19/2020',258.4],['2/26/2020',273.1],['3/4/2020',265.8],['3/11/2020',280.7],['3/18/2020',278.1],['3/25/2020',237.4],['4/1/2020',211.7],['4/8/2020',185.9],['4/15/2020',182.6],['4/22/2020',186.4],['4/29/2020',208.0],['5/6/2020',220.0],['5/13/2020',243.3],['5/20/2020',258.9],['5/27/2020',281.2],['6/3/2020',296.0],['6/10/2020',311.7],['6/17/2020',322.5],['6/24/2020',312.7],['7/1/2020',308.7],['7/8/2020',325.2],['7/15/2020',305.4],['7/22/2020',310.9],['7/29/2020',306.1],['8/5/2020',300.7],['8/12/2020',306.6],['8/19/2020',308.9],['8/26/2020',310.2],['9/2/2020',309.6],['9/9/2020',317.7],['9/16/2020',316.2],['9/23/2020',327.0],['9/30/2020',320.9],['10/7/2020',316.0],['10/14/2020',311.1],['10/21/2020',304.6],['10/28/2020',305.2],['11/4/2020',301.2],['11/11/2020',293.5],['11/18/2020',303.9],['11/25/2020',314.6],['12/2/2020',342.9],['12/9/2020',325.7],['12/16/2020',331.6],['12/23/2020',316.3],['1/6/2021',313.8],['1/13/2021',338.9],['1/20/2021',348.2],['1/27/2021',334.2],['2/3/2021',334.6],['2/10/2021',318.8],['2/17/2021',299.5],['2/24/2021',264.9],['3/3/2021',269.7],['3/10/2021',289.0],['3/17/2021',294.3],['3/24/2021',301.9],['3/31/2021',297.3],['4/7/2021',283.6],['4/14/2021',279.5],['4/21/2021',295.5],['4/28/2021',281.4],['5/5/2021',274.5],['5/12/2021',276.7],['5/19/2021',265.3],['5/26/2021',269.8],['6/2/2021',261.4],['6/9/2021',262.1],['6/16/2021',266.3],['6/23/2021',268.0],['6/30/2021',255.2],['7/7/2021',252.4],['7/14/2021',273.3],['7/21/2021',255.8],['7/28/2021',251.7],['8/4/2021',247.5],['8/11/2021',252.0],['8/18/2021',249.9],['8/25/2021',257.5],['9/1/2021',259.0],['9/8/2021',258.4],['9/15/2021',277.9],['9/22/2021',283.9],['9/29/2021',280.4],['10/6/2021',275.7],['10/13/2021',279.8],['10/20/2021',266.2],['10/27/2021',275.6],['11/3/2021',271.1],['11/10/2021',278.4],['11/17/2021',282.5],['11/24/2021',295.7],['12/1/2021',310.7],['12/8/2021',295.2],['12/15/2021',297.2],['12/22/2021',287.5],['1/5/2022',277.3],['1/12/2022',283.4],['1/19/2022',305.7],['1/26/2022',300.1],['2/2/2022',312.2],['2/9/2022',282.3],['2/16/2022',279.0],['2/23/2022',250.7],['3/2/2022',246.3],['3/9/2022',267.6],['3/16/2022',269.5],['3/23/2022',265.4],['3/30/2022',267.1],['4/6/2022',258.1],['4/13/2022',261.8],['4/20/2022',254.0],['4/27/2022',234.7],['5/4/2022',244.4],['5/11/2022',255.4],['5/18/2022',225.0],['5/25/2022',225.5],['6/1/2022',224.1],['6/8/2022',208.2],['6/15/2022',225.0],['6/22/2022',242.8],['6/29/2022',243.1],['7/6/2022',232.6],['7/13/2022',224.3],['7/20/2022',208.0],['7/27/2022',206.4],['8/3/2022',208.4],['8/10/2022',205.4],['8/17/2022',203.8],['8/24/2022',202.8],['8/31/2022',199.1],['9/7/2022',197.8],['9/14/2022',198.1],['9/21/2022',200.1],['9/28/2022',199.3],['10/5/2022',174.1],['10/12/2022',170.5],['10/19/2022',164.2],['10/26/2022',160.4],['11/2/2022',160.5],['11/9/2022',162.6],['11/16/2022',169.7],['11/23/2022',174.4],['11/30/2022',181.0],['12/7/2022',175.5],['12/14/2022',182.6],['12/21/2022',182.5],['1/4/2023',160.2],['1/11/2023',159.4],['1/18/2023',198.7],['1/25/2023',205.4],['2/1/2023',184.3],['2/8/2023',190.0],['2/15/2023',179.6],['2/22/2023',147.1],['3/1/2023',138.8],['3/8/2023',154.4],['3/15/2023',165.6],['3/22/2023',169.3],['3/29/2023',172.7],['4/5/2023',166.6],['4/12/2023',179.6],['4/19/2023',161.6],['4/26/2023',169.1],['5/3/2023',165.8],['5/10/2023',173.7],['5/17/2023',165.4],['5/24/2023',158.3],['5/31/2023',154.4],['6/7/2023',151.7],['6/14/2023',163.2],['6/21/2023',165.6],['6/28/2023',170.3],['7/6/2023',162.4],['7/12/2023',165.3],['7/19/2023',163.2],['7/26/2023',159.2],['8/2/2023',154.1],['8/9/2023',149.9],['8/16/2023',149.5],['8/23/2023',142.0],['8/30/2023',144.9],['9/6/2023',141.9],['9/13/2023',143.7],['9/20/2023',147.0],['9/27/2023',144.8],['10/4/2023',136.6],['10/11/2023',137.5],['10/18/2023',129.8],['10/25/2023',127.0],['11/1/2023',125.2],['11/8/2023',129.0],['11/15/2023',133.2],['11/22/2023',138.4],['11/29/2023',144.9],['12/6/2023',144.5],['12/13/2023',149.6],['12/20/2023',148.7],['1/3/2024',140.7],['1/10/2024',148.6],['1/17/2024',162.2],['1/24/2024',174.3],['1/31/2024',154.5],['2/7/2024',153.5],['2/14/2024',149.6],['2/21/2024',133.6],['2/28/2024',127.6],['3/6/2024',141.1],['3/13/2024',147.7],['3/20/2024',146.0],['3/27/2024',145.7],['4/3/2024',145.6],['4/10/2024',138.7],['4/17/2024',145.6],['4/24/2024',144.2],['5/1/2024',141.7],['5/8/2024',144.2],['5/15/2024',141.7],['5/22/2024',140.0],['5/29/2024',138.4],['6/5/2024',132.3],['6/12/2024',143.7],['6/19/2024',146.0],['6/26/2024',147.8],['7/3/2024',142.9],['7/10/2024',144.3],['7/17/2024',140.4],['7/24/2024',134.8],['7/31/2024',132.8],['8/7/2024',133.9],['8/14/2024',137.7],['8/21/2024',130.6],['8/28/2024',131.8],['9/4/2024',136.1],['9/11/2024',138.6],['9/18/2024',146.1],['9/25/2024',148.2],['10/2/2024',149.3],['10/9/2024',149.2],['10/16/2024',138.4],['10/23/2024',131.3],['10/30/2024',137.8],['11/6/2024',130.8],['11/13/2024',133.3],['11/20/2024',136.0],['11/27/2024',152.9],['12/4/2024',161.5],['12/11/2024',154.9],['12/18/2024',157.1],['1/2/2025',136.7],['1/8/2025',127.7],['1/15/2025',162.0],['1/22/2025',163.0],['1/29/2025',162.4],['2/5/2025',156.7],['2/12/2025',153.1],['2/19/2025',144.0],['2/26/2025',144.3],['3/5/2025',144.5],['3/12/2025',154.6],['3/19/2025',154.7],['3/26/2025',155.8],['4/2/2025',158.2],['4/9/2025',172.7],['4/16/2025',164.2],['4/23/2025',153.4],['4/30/2025',146.6],['5/7/2025',162.8],['5/14/2025',166.5],['5/21/2025',157.8],['5/28/2025',162.1],['6/4/2025',155.0],['6/11/2025',170.9],['6/18/2025',165.8],['6/25/2025',165.2],['7/2/2025',165.3],['7/9/2025',180.9],['7/16/2025',159.6],['7/23/2025',165.1],['7/30/2025',155.6],['8/6/2025',158.0],['8/13/2025',160.2],['8/20/2025',160.3],['8/27/2025',163.8],['9/3/2025',158.7],['9/10/2025',169.1],['9/17/2025',174.0],['9/24/2025',174.5],['10/1/2025',172.7],['10/8/2025',170.6],['10/15/2025',166.0],['10/22/2025',157.3],['10/29/2025',164.3],['11/5/2025',163.3],['11/12/2025',172.7],['11/19/2025',168.7],['11/26/2025',181.6],['12/3/2025',186.1],['12/10/2025',181.6],['12/17/2025',176.5],['12/24/2025',169.9],['1/7/2026',159.3],['1/14/2026',184.6],['1/21/2026',194.1],['1/28/2026',193.3],['2/4/2026',165.4],['2/11/2026',161.5],['2/18/2026',157.1],['2/25/2026',149.7],['3/4/2026',158.9],['3/11/2026',171.3],['3/18/2026',172.9],['3/25/2026',163.6],['4/1/2026',159.4],['4/8/2026',161.1],['4/15/2026',159.5],['4/22/2026',175.6],['4/29/2026',177.7],['5/6/2026',171.1]];
 
 let mbaData = []; // merged seed + manual, sorted by date asc
-let weeklyInventoryData = []; // {date, yy} from Realtor.com weekly national inventory feed
-
 // How many months of MBA history to show in the chart (null = all)
 let mbaRangeMonths = null;
 const MBA_RANGE_OPTIONS = [
@@ -985,6 +984,7 @@ async function loadMbaData() {
 const fmtD = v => v == null ? 'N/A' : '$' + Math.round(v).toLocaleString();
 const fmtN = v => v == null ? 'N/A' : Math.round(v).toLocaleString();
 const fmtP = v => v == null ? 'N/A' : (v * 100).toFixed(1) + '%';
+const fmtDays = v => v == null ? 'N/A' : Math.round(v) + ' days';
 const fmtYoy = v => v == null ? '' : (v > 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
 const yoyClass = v => v == null ? 'neu' : v > 0 ? 'pos' : 'neg';
 
@@ -1181,7 +1181,7 @@ function renderOverview(geo) {
     { label: 'Median List Price', val: fmtD(latest.median_listing_price), yoy: latest.median_listing_price_yy, mom: mom('median_listing_price'), yoyPrev: prevYr ? fmtD(prevYr.median_listing_price) : '', momPrev: prev ? fmtD(prev.median_listing_price) : '', accent: g.accent },
     { label: 'Active Listings', val: fmtN(latest.active_listing_count), yoy: latest.active_listing_count_yy, mom: mom('active_listing_count'), yoyPrev: prevYr ? fmtN(prevYr.active_listing_count) : '', momPrev: prev ? fmtN(prev.active_listing_count) : '', accent: '#34d399' },
     { label: 'New Listings', val: fmtN(latest.new_listing_count), yoy: latest.new_listing_count_yy, mom: mom('new_listing_count'), yoyPrev: prevYr ? fmtN(prevYr.new_listing_count) : '', momPrev: prev ? fmtN(prev.new_listing_count) : '', accent: '#a78bfa' },
-    { label: 'Days on Market', val: latest.median_days_on_market, yoy: latest.median_days_on_market_yy, mom: mom('median_days_on_market'), yoyPrev: prevYr ? prevYr.median_days_on_market : '', momPrev: prev ? prev.median_days_on_market : '', accent: '#f97316' },
+    { label: 'Days on Market', val: fmtDays(latest.median_days_on_market), yoy: latest.median_days_on_market_yy, mom: mom('median_days_on_market'), yoyPrev: prevYr ? fmtDays(prevYr.median_days_on_market) : '', momPrev: prev ? fmtDays(prev.median_days_on_market) : '', accent: '#f97316' },
     { label: 'Pending Ratio', val: fmtP(latest.pending_ratio), yoy: latest.pending_ratio_yy, mom: mom('pending_ratio'), yoyPrev: prevYr ? fmtP(prevYr.pending_ratio) : '', momPrev: prev ? fmtP(prev.pending_ratio) : '', accent: '#facc15' },
   ];
   document.getElementById('kpi-grid').innerHTML = kpis.map(k => kpiCard(k)).join('');
@@ -1218,7 +1218,7 @@ function renderMetroTable() {
       <td>${fmtD(d.median_listing_price)}</td><td class="yoy-cell ${yoyClass(d.median_listing_price_yy)}">${fmtYoy(d.median_listing_price_yy)}</td>
       <td>${fmtN(d.active_listing_count)}</td><td class="yoy-cell ${yoyClass(d.active_listing_count_yy)}">${fmtYoy(d.active_listing_count_yy)}</td>
       <td>${fmtN(d.new_listing_count)}</td><td class="yoy-cell ${yoyClass(d.new_listing_count_yy)}">${fmtYoy(d.new_listing_count_yy)}</td>
-      <td>${d.median_days_on_market ?? 'N/A'}</td><td class="yoy-cell ${yoyClass(d.median_days_on_market_yy)}">${fmtYoy(d.median_days_on_market_yy)}</td>
+      <td>${fmtDays(d.median_days_on_market)}</td><td class="yoy-cell ${yoyClass(d.median_days_on_market_yy)}">${fmtYoy(d.median_days_on_market_yy)}</td>
       <td>${fmtP(d.price_reduced_share)}</td><td class="yoy-cell ${yoyClass(d.price_reduced_share_yy)}">${fmtYoy(d.price_reduced_share_yy)}</td>
       <td>${fmtN(d.pending_listing_count)}</td><td class="yoy-cell ${yoyClass(d.pending_listing_count_yy)}">${fmtYoy(d.pending_listing_count_yy)}</td>
       <td>${fmtP(d.pending_ratio)}</td><td class="yoy-cell ${ratioYoyClass}">${ratioYoyStr}</td>
@@ -1261,7 +1261,7 @@ function renderMetroTrends(code) {
     { label: 'Median List Price', val: fmtD(latest.median_listing_price), yoy: latest.median_listing_price_yy, mom: mom('median_listing_price'), yoyPrev: prevYr ? fmtD(prevYr.median_listing_price) : '', momPrev: prev ? fmtD(prev.median_listing_price) : '', accent: color },
     { label: 'Active Listings', val: fmtN(latest.active_listing_count), yoy: latest.active_listing_count_yy, mom: mom('active_listing_count'), yoyPrev: prevYr ? fmtN(prevYr.active_listing_count) : '', momPrev: prev ? fmtN(prev.active_listing_count) : '', accent: '#34d399' },
     { label: 'New Listings', val: fmtN(latest.new_listing_count), yoy: latest.new_listing_count_yy, mom: mom('new_listing_count'), yoyPrev: prevYr ? fmtN(prevYr.new_listing_count) : '', momPrev: prev ? fmtN(prev.new_listing_count) : '', accent: '#a78bfa' },
-    { label: 'Days on Market', val: latest.median_days_on_market, yoy: latest.median_days_on_market_yy, mom: mom('median_days_on_market'), yoyPrev: prevYr ? prevYr.median_days_on_market : '', momPrev: prev ? prev.median_days_on_market : '', accent: '#f97316' },
+    { label: 'Days on Market', val: fmtDays(latest.median_days_on_market), yoy: latest.median_days_on_market_yy, mom: mom('median_days_on_market'), yoyPrev: prevYr ? fmtDays(prevYr.median_days_on_market) : '', momPrev: prev ? fmtDays(prev.median_days_on_market) : '', accent: '#f97316' },
     { label: 'Pending Ratio', val: fmtP(latest.pending_ratio), yoy: latest.pending_ratio_yy, mom: mom('pending_ratio'), yoyPrev: prevYr ? fmtP(prevYr.pending_ratio) : '', momPrev: prev ? fmtP(prev.pending_ratio) : '', accent: '#facc15' },
   ];
   document.getElementById('metro-kpi-grid').innerHTML = kpis.map(k => kpiCard(k)).join('');
@@ -1285,13 +1285,26 @@ function renderMetroTrends(code) {
   attachChartDetail('mch-ratio', slice, 'Pending Ratio', v => fmtP(v), 'pending_ratio', '#e879f9');
 }
 
-function nearestInventoryYoy(mbaDate) {
+// Monthly Active Listings count (raw) for whatever month an MBA week falls in
+function activeListingsForDate(mbaDate) {
+  const history = DATA.us && DATA.us.history;
+  if (!history) return null;
+  const ym = mbaDate.getFullYear() * 100 + (mbaDate.getMonth() + 1);
+  const row = history.find(r => r.date === ym);
+  return row ? row.active_listing_count : null;
+}
+
+// Nearest weekly FRED 30-Year Mortgage Rate reading to an MBA week
+function nearestMortgageRate(mbaDate) {
+  const series = fredData['MORTGAGE30US'];
+  if (!series || !series.length) return null;
   let best = null, bestDiff = Infinity;
-  for (const inv of weeklyInventoryData) {
-    const diff = Math.abs(inv.date - mbaDate);
-    if (diff < bestDiff && diff <= 4 * 86400000) { bestDiff = diff; best = inv; }
+  for (const pt of series) {
+    const d = new Date(pt.date + 'T00:00:00');
+    const diff = Math.abs(d - mbaDate);
+    if (diff < bestDiff && diff <= 5 * 86400000) { bestDiff = diff; best = pt; }
   }
-  return best ? best.yy : null;
+  return best ? best.value : null;
 }
 
 function renderMba() {
@@ -1327,31 +1340,54 @@ function renderMba() {
 
   const labels = filtered.map(r => r.date);
   const vals = filtered.map(r => r.val);
-  const showInv = document.getElementById('mba-inv-toggle').checked;
+  const showListings = document.getElementById('mba-listings-toggle').checked;
+  const showRate = document.getElementById('mba-rate-toggle').checked;
 
   const datasets = [
     { data: vals, borderColor: '#38bdf8', backgroundColor: '#38bdf822', fill: true, tension: .35, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2, label: 'Index', yAxisID: 'y' },
     { data: Array(vals.length).fill(last.val), borderColor: '#f87171', backgroundColor: 'transparent', fill: false, tension: 0, pointRadius: 0, borderWidth: 1.5, borderDash: [6, 4], label: 'Latest (' + last.val + ')', yAxisID: 'y' }
   ];
-  if (showInv) {
-    const invVals = filtered.map(r => nearestInventoryYoy(parseMbaDate(r.date)));
-    datasets.push({ data: invVals, borderColor: '#34d399', backgroundColor: 'transparent', fill: false, tension: .35, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2, borderDash: [2, 2], label: 'Realtor.com Active Listings YoY %', yAxisID: 'y1', spanGaps: true }
-    );
+  if (showListings) {
+    const listingVals = filtered.map(r => activeListingsForDate(parseMbaDate(r.date)));
+    datasets.push({ data: listingVals, borderColor: '#34d399', backgroundColor: 'transparent', fill: false, stepped: true, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2, borderDash: [2, 2], label: 'Active Listings (count)', yAxisID: 'y1', spanGaps: true });
+  }
+  if (showRate) {
+    const rateVals = filtered.map(r => nearestMortgageRate(parseMbaDate(r.date)));
+    datasets.push({ data: rateVals, borderColor: '#facc15', backgroundColor: 'transparent', fill: false, tension: .35, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2, borderDash: [4, 3], label: '30-Yr Mortgage Rate (%)', yAxisID: 'y2', spanGaps: true });
   }
 
   destroyChart('mba-chart');
   const ctx = document.getElementById('mba-chart');
   if (ctx) {
+    // Same tick count on every axis so gridlines from the left (Index) axis
+    // line up with the right-side axis labels, even though the underlying
+    // value ranges are completely different units.
+    const TICK_COUNT = 7;
     const scales = {
       x: { grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 12, maxRotation: 45, font: { size: 9 } } },
-      y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 } } }
+      y: { grid: { color: '#1e3a5f' }, ticks: { count: TICK_COUNT, font: { size: 9 } } }
     };
-    if (showInv) scales.y1 = { position: 'right', grid: { display: false }, ticks: { font: { size: 9 }, callback: v => v + '%' } };
+    if (showListings) scales.y1 = { position: 'right', grid: { display: false }, ticks: { count: TICK_COUNT, font: { size: 9 }, callback: v => v.toLocaleString() } };
+    if (showRate) scales.y2 = { position: 'right', offset: showListings, grid: { display: false }, ticks: { count: TICK_COUNT, font: { size: 9 }, callback: v => v.toFixed(2) + '%' } };
     charts['mba-chart'] = new Chart(ctx, {
       type: 'line',
       data: { labels, datasets },
       options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { display: true, labels: { boxWidth: 20, padding: 14, color: '#94a3b8', font: { size: 10 }, filter: i => i.datasetIndex >= 1 } } },
+        plugins: {
+          legend: { display: true, labels: { boxWidth: 20, padding: 14, color: '#94a3b8', font: { size: 10 }, filter: i => i.datasetIndex >= 1 } },
+          tooltip: {
+            backgroundColor: '#1e293b', borderColor: '#334155', borderWidth: 1,
+            callbacks: {
+              label: (ctx) => {
+                const v = ctx.parsed.y;
+                if (v == null) return ctx.dataset.label;
+                if (ctx.dataset.yAxisID === 'y2') return ctx.dataset.label + ': ' + v.toFixed(2) + '%';
+                if (ctx.dataset.yAxisID === 'y1') return ctx.dataset.label + ': ' + v.toLocaleString();
+                return ctx.dataset.label + ': ' + v.toFixed(1);
+              }
+            }
+          }
+        },
         scales
       }
     });
@@ -1362,9 +1398,13 @@ function renderMba() {
         { label: 'WoW', text: r.wow == null ? 'N/A' : (r.wow >= 0 ? '+' : '') + r.wow + '%', cls: r.wow == null ? 'neu' : r.wow >= 0 ? 'pos' : 'neg' },
         { label: 'YoY', text: r.yoy == null ? 'N/A' : (r.yoy >= 0 ? '+' : '') + r.yoy + '%', cls: r.yoy == null ? 'neu' : r.yoy >= 0 ? 'pos' : 'neg' }
       ];
-      if (showInv) {
-        const inv = nearestInventoryYoy(parseMbaDate(r.date));
-        changes.push({ label: 'Active Listings YoY', text: inv == null ? 'N/A' : (inv >= 0 ? '+' : '') + inv.toFixed(1) + '%', cls: inv == null ? 'neu' : inv >= 0 ? 'pos' : 'neg' });
+      if (showListings) {
+        const count = activeListingsForDate(parseMbaDate(r.date));
+        changes.push({ label: 'Active Listings', text: count == null ? 'N/A' : count.toLocaleString(), cls: 'neu' });
+      }
+      if (showRate) {
+        const rate = nearestMortgageRate(parseMbaDate(r.date));
+        changes.push({ label: '30-Yr Rate', text: rate == null ? 'N/A' : rate.toFixed(2) + '%', cls: 'neu' });
       }
       return { dateLabel: 'Week ending ' + r.date, valLabel: r.val.toFixed(1), changes };
     });
@@ -1637,6 +1677,45 @@ const TAMU_SHORT = {
 
 let tamuData = []; // all rows
 let currentTamuMarket = 'Texas';
+let tamuRangeMonths = 24;
+
+function renderTamuRangeButtons() {
+  const el = document.getElementById('tamu-range-btns');
+  if (!el) return;
+  el.innerHTML = CHART_RANGE_OPTIONS.map(o =>
+    `<button class="range-btn ${o.months === tamuRangeMonths ? 'active' : ''}" onclick="setTamuRange(${o.months})">${o.label}</button>`
+  ).join('');
+}
+
+function setTamuRange(months) {
+  tamuRangeMonths = months;
+  renderTamuRangeButtons();
+  renderTamu();
+}
+
+// TAMU rows don't carry precomputed YoY for every field, so find the same
+// calendar month a year earlier by searching the full (unsliced) series.
+function attachTamuChartDetail(chartId, sliceRows, fullRows, title, field, fmtFn, color) {
+  makeChartClickable(chartId, color, (index) => {
+    const r = sliceRows[index];
+    if (!r) return null;
+    const fullIdx = fullRows.indexOf(r);
+    const prev = fullIdx > 0 ? fullRows[fullIdx - 1] : null;
+    const mom = prev && prev[field] ? (r[field] - prev[field]) / prev[field] : null;
+    const d = new Date(r.date + 'T00:00:00');
+    const yoyDate = new Date(d.getFullYear() - 1, d.getMonth(), 1).toISOString().slice(0, 10);
+    const yoyRow = fullRows.find(x => x.date === yoyDate);
+    const yoy = yoyRow && yoyRow[field] ? (r[field] - yoyRow[field]) / yoyRow[field] : null;
+    return {
+      dateLabel: title + ' — ' + d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      valLabel: fmtFn(r[field]),
+      changes: [
+        { label: 'MoM', text: mom == null ? 'N/A' : fmtYoy(mom), cls: mom == null ? 'neu' : yoyClass(mom) },
+        { label: 'YoY', text: yoy == null ? 'N/A' : fmtYoy(yoy), cls: yoy == null ? 'neu' : yoyClass(yoy) }
+      ]
+    };
+  });
+}
 
 async function handleTamuUpload(event) {
   const files = event.target.files;
@@ -1719,6 +1798,7 @@ function exportTamuJson() {
 
 function renderTamu() {
   if (!tamuData.length) return;
+  renderTamuRangeButtons();
 
   // Get unique markets
   const markets = [...new Set(tamuData.map(r => r.market))];
@@ -1790,8 +1870,8 @@ function renderTamu() {
     </tr>`;
   }).join('');
 
-  // Single market charts (last 24 months)
-  const slice = mktData.slice(-24);
+  // Single market charts
+  const slice = tamuRangeMonths ? mktData.slice(-tamuRangeMonths) : mktData;
   const labels = slice.map(r => { const d = new Date(r.date + 'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
 
   mkChart('tamu-ch-price', labels, ds(slice.map(r => r.medPrice), color), true);
@@ -1799,13 +1879,18 @@ function renderTamu() {
   mkChart('tamu-ch-active', labels, ds(slice.map(r => r.activeListings), '#a78bfa', false));
   mkChart('tamu-ch-inv', labels, ds(slice.map(r => r.monthsInv), '#f97316', false));
 
+  attachTamuChartDetail('tamu-ch-price', slice, mktData, 'Median Price', 'medPrice', v => '$' + Math.round(v).toLocaleString(), color);
+  attachTamuChartDetail('tamu-ch-sales', slice, mktData, 'Sales', 'sales', v => Math.round(v).toLocaleString(), '#34d399');
+  attachTamuChartDetail('tamu-ch-active', slice, mktData, 'Active Listings', 'activeListings', v => Math.round(v).toLocaleString(), '#a78bfa');
+  attachTamuChartDetail('tamu-ch-inv', slice, mktData, 'Months Inventory', 'monthsInv', v => v.toFixed(2), '#f97316');
+
   // All-market overlay charts
   renderTamuAllCharts(markets);
 }
 
 function renderTamuAllCharts(markets) {
   const allDates = [...new Set(tamuData.map(r => r.date))].sort();
-  const last24 = allDates.slice(-24);
+  const last24 = tamuRangeMonths ? allDates.slice(-tamuRangeMonths) : allDates;
   const labels = last24.map(d => { const dt = new Date(d + 'T00:00:00'); return dt.toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
 
   const priceDS = [];
@@ -1946,6 +2031,21 @@ let rfHousingData = [];
 let rfBuyersData = [];
 let rfDelistData = [];
 let currentRfRegion = 'national';
+let rfRangeMonths = 24;
+
+function renderRfRangeButtons() {
+  const el = document.getElementById('rf-range-btns');
+  if (!el) return;
+  el.innerHTML = CHART_RANGE_OPTIONS.map(o =>
+    `<button class="range-btn ${o.months === rfRangeMonths ? 'active' : ''}" onclick="setRfRange(${o.months})">${o.label}</button>`
+  ).join('');
+}
+
+function setRfRange(months) {
+  rfRangeMonths = months;
+  renderRfRangeButtons();
+  renderRfTracker();
+}
 
 async function handleRfUpload(event) {
   const files = event.target.files;
@@ -2035,16 +2135,17 @@ async function loadRfData() {
 }
 
 async function loadRfFromRepo() {
-  for (const [key, arr, prop] of [['rf_housing', rfHousingData, 'rfHousingData'], ['rf_buyers', rfBuyersData, 'rfBuyersData'], ['rf_delist', rfDelistData, 'rfDelistData']]) {
-    try {
-      const resp = await fetch(MANUAL_BASE + '/' + key + '.json', { signal: AbortSignal.timeout(5000) });
-      if (!resp.ok) continue;
-      const data = await resp.json();
-      if (!Array.isArray(data)) continue;
+  try {
+    const resp = await fetch(MANUAL_BASE + '/rf_tracker.json', { signal: AbortSignal.timeout(8000) });
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (!data || typeof data !== 'object') return;
+    for (const [arr, repoArr] of [[rfHousingData, data.housing], [rfBuyersData, data.buyers], [rfDelistData, data.delist]]) {
+      if (!Array.isArray(repoArr)) continue;
       const seen = new Set(arr.map(r => r.key));
-      for (const r of data) { if (!seen.has(r.key)) { seen.add(r.key); arr.push(r); } }
-    } catch(e) {}
-  }
+      for (const r of repoArr) { if (!seen.has(r.key)) { seen.add(r.key); arr.push(r); } }
+    }
+  } catch(e) {}
 }
 
 function exportRfJson() {
@@ -2078,9 +2179,32 @@ function aggregateRegion(data, region, sumFields, avgFields) {
 
 function renderRfTracker() {
   buildRfRegionBtns();
+  renderRfRangeButtons();
   renderRfHousing();
   renderRfBuyers();
   renderRfDelist();
+}
+
+// Attach click-detail to a Redfin-style monthly chart where `<yoyField>` is a
+// pre-computed percent NUMBER (e.g. 5.2 meaning 5.2%), not a fraction.
+function attachRfChartDetail(chartId, rows, title, valField, yoyField, fmtValFn, color) {
+  makeChartClickable(chartId, color, (index) => {
+    const r = rows[index];
+    if (!r) return null;
+    const prev = rows[index - 1];
+    const val = r[valField];
+    const yoy = r[yoyField];
+    const mom = prev && prev[valField] ? (val - prev[valField]) / prev[valField] : null;
+    const d = new Date(r.period + 'T00:00:00');
+    return {
+      dateLabel: title + ' — ' + d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      valLabel: fmtValFn(val),
+      changes: [
+        { label: 'MoM', text: mom == null ? 'N/A' : fmtYoy(mom), cls: mom == null ? 'neu' : yoyClass(mom) },
+        { label: 'YoY', text: yoy == null ? 'N/A' : (yoy >= 0 ? '+' : '') + yoy.toFixed(1) + '%', cls: yoy == null ? 'neu' : yoy >= 0 ? 'pos' : 'neg' }
+      ]
+    };
+  });
 }
 
 function buildRfRegionBtns() {
@@ -2120,11 +2244,27 @@ function renderRfHousing() {
   document.getElementById('rf-hm-kpis').innerHTML = kpis.map(k => kpiCard(k)).join('');
 
   // Charts
-  const labels = agg.map(r => { const d = new Date(r.period+'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
-  mkChart('rf-ch-sold', labels, ds(agg.map(r => r.homesSold), color, false));
-  mkChart('rf-ch-sold-yoy', labels, ds(agg.map(r => r.homesSoldYoy), '#f87171', false));
-  mkChart('rf-ch-pending', labels, ds(agg.map(r => r.pendingSales), '#34d399', false));
-  mkChart('rf-ch-pending-yoy', labels, ds(agg.map(r => r.pendingYoy), '#a78bfa', false));
+  const chartRows = rfRangeMonths ? agg.slice(-rfRangeMonths) : agg;
+  const labels = chartRows.map(r => { const d = new Date(r.period+'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
+  mkChart('rf-ch-sold', labels, ds(chartRows.map(r => r.homesSold), color, false));
+  mkChart('rf-ch-sold-yoy', labels, ds(chartRows.map(r => r.homesSoldYoy), '#f87171', false));
+  mkChart('rf-ch-pending', labels, ds(chartRows.map(r => r.pendingSales), '#34d399', false));
+  mkChart('rf-ch-pending-yoy', labels, ds(chartRows.map(r => r.pendingYoy), '#a78bfa', false));
+
+  attachRfChartDetail('rf-ch-sold', chartRows, 'Homes Sold', 'homesSold', 'homesSoldYoy', v => v == null ? 'N/A' : Math.round(v).toLocaleString(), color);
+  attachRfChartDetail('rf-ch-pending', chartRows, 'Pending Sales', 'pendingSales', 'pendingYoy', v => v == null ? 'N/A' : Math.round(v).toLocaleString(), '#34d399');
+  makeChartClickable('rf-ch-sold-yoy', '#f87171', (index) => {
+    const r = chartRows[index];
+    if (!r || r.homesSoldYoy == null) return null;
+    const d = new Date(r.period + 'T00:00:00');
+    return { dateLabel: 'Homes Sold YoY — ' + d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }), valLabel: (r.homesSoldYoy >= 0 ? '+' : '') + r.homesSoldYoy.toFixed(1) + '%', changes: [] };
+  });
+  makeChartClickable('rf-ch-pending-yoy', '#a78bfa', (index) => {
+    const r = chartRows[index];
+    if (!r || r.pendingYoy == null) return null;
+    const d = new Date(r.period + 'T00:00:00');
+    return { dateLabel: 'Pending Sales YoY — ' + d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }), valLabel: (r.pendingYoy >= 0 ? '+' : '') + r.pendingYoy.toFixed(1) + '%', changes: [] };
+  });
 
   // Regional comparison table
   const latestPeriod = agg[agg.length-1].period;
@@ -2181,25 +2321,26 @@ function renderRfBuyers() {
 
   // Charts - show all regions
   const regionKeys = Object.keys(regionMap);
-  const labels = periods.map(p => { const d = new Date(p+'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
+  const chartPeriods = rfRangeMonths ? periods.slice(-rfRangeMonths) : periods;
+  const labels = chartPeriods.map(p => { const d = new Date(p+'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
 
   const ratioDS = regionKeys.map(rn => {
     const rk = regionMap[rn];
     const byPeriod = {}; allRes.filter(r => r.region === rn).forEach(r => byPeriod[r.period] = r);
-    return { label: RF_REGION_LABELS[rk], data: periods.map(p => byPeriod[p]?.bsRatio ?? null), borderColor: RF_REGION_COLORS[rk], backgroundColor:'transparent', fill:false, tension:.35, pointRadius:2, borderWidth:2 };
+    return { label: RF_REGION_LABELS[rk], data: chartPeriods.map(p => byPeriod[p]?.bsRatio ?? null), borderColor: RF_REGION_COLORS[rk], backgroundColor:'transparent', fill:false, tension:.35, pointRadius:2, borderWidth:2 };
   });
 
   const diffDS = regionKeys.map(rn => {
     const rk = regionMap[rn];
     const byPeriod = {}; allRes.filter(r => r.region === rn).forEach(r => byPeriod[r.period] = r);
-    return { label: RF_REGION_LABELS[rk], data: periods.map(p => byPeriod[p]?.sbDiff ?? null), borderColor: RF_REGION_COLORS[rk], backgroundColor:'transparent', fill:false, tension:.35, pointRadius:2, borderWidth:2 };
+    return { label: RF_REGION_LABELS[rk], data: chartPeriods.map(p => byPeriod[p]?.sbDiff ?? null), borderColor: RF_REGION_COLORS[rk], backgroundColor:'transparent', fill:false, tension:.35, pointRadius:2, borderWidth:2 };
   });
 
-  if (charts['rf-ch-ratio']) charts['rf-ch-ratio'].destroy();
+  destroyChart('rf-ch-ratio');
   const ctx1 = document.getElementById('rf-ch-ratio');
   if (ctx1) charts['rf-ch-ratio'] = new Chart(ctx1, { type:'line', data:{labels,datasets:ratioDS}, options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{boxWidth:12,padding:8,color:'#94a3b8',font:{size:9}}}},scales:{x:{grid:{color:'#1e293b'},ticks:{font:{size:9}}},y:{grid:{color:'#1e3a5f'},ticks:{font:{size:9}}}}} });
 
-  if (charts['rf-ch-diff']) charts['rf-ch-diff'].destroy();
+  destroyChart('rf-ch-diff');
   const ctx2 = document.getElementById('rf-ch-diff');
   if (ctx2) charts['rf-ch-diff'] = new Chart(ctx2, { type:'line', data:{labels,datasets:diffDS}, options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{boxWidth:12,padding:8,color:'#94a3b8',font:{size:9}}}},scales:{x:{grid:{color:'#1e293b'},ticks:{font:{size:9}}},y:{grid:{color:'#1e3a5f'},ticks:{font:{size:9},callback:v=>v+'%'}}}} });
 
@@ -2236,9 +2377,13 @@ function renderRfDelist() {
   document.getElementById('rf-dl-kpis').innerHTML = kpis.map(k => kpiCard(k)).join('');
 
   // Charts
-  const labels = agg.map(r => { const d = new Date(r.period+'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
-  mkChart('rf-ch-delist', labels, ds(agg.map(r => r.delistShare), '#f87171', false), false, true);
-  mkChart('rf-ch-relist', labels, ds(agg.map(r => r.relistShare), '#34d399', false), false, true);
+  const chartRows = rfRangeMonths ? agg.slice(-rfRangeMonths) : agg;
+  const labels = chartRows.map(r => { const d = new Date(r.period+'T00:00:00'); return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}); });
+  mkChart('rf-ch-delist', labels, ds(chartRows.map(r => r.delistShare), '#f87171', false), false, true);
+  mkChart('rf-ch-relist', labels, ds(chartRows.map(r => r.relistShare), '#34d399', false), false, true);
+
+  attachRfChartDetail('rf-ch-delist', chartRows, 'Share Delisted', 'delistShare', 'delistShareYoy', v => v == null ? 'N/A' : v.toFixed(2) + '%', '#f87171');
+  attachRfChartDetail('rf-ch-relist', chartRows, 'Share Relisted', 'relistShare', 'relistShareYoy', v => v == null ? 'N/A' : v.toFixed(2) + '%', '#34d399');
 
   // Regional comparison table
   const latestPeriod = latest.period;
@@ -2290,6 +2435,66 @@ const FRED_SERIES = [
 
 let fredData = {}; // { seriesId: [{ date, value }] }
 let econLoaded = false;
+let econRangeMonths = null;
+
+function renderEconRangeButtons() {
+  const el = document.getElementById('econ-range-btns');
+  if (!el) return;
+  el.innerHTML = CHART_RANGE_OPTIONS.map(o =>
+    `<button class="range-btn ${o.months === econRangeMonths ? 'active' : ''}" onclick="setEconRange(${o.months})">${o.label}</button>`
+  ).join('');
+}
+
+function setEconRange(months) {
+  econRangeMonths = months;
+  renderEconRangeButtons();
+  renderEcon();
+}
+
+// FRED series span multiple cadences (weekly/monthly/quarterly) - filter by
+// calendar date rather than item count so the range options mean the same
+// thing regardless of a series' native frequency.
+function econSlice(data) {
+  if (!econRangeMonths || !data) return data;
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - econRangeMonths);
+  return data.filter(d => new Date(d.date + 'T00:00:00') >= cutoff);
+}
+
+function attachEconChartDetail(chartId, data, label, unit, color) {
+  const fmtVal = v => {
+    if (v == null) return 'N/A';
+    if (unit === '$') return '$' + Math.round(v).toLocaleString();
+    if (unit === '$M') return '$' + (v / 1000).toFixed(0) + 'B';
+    if (unit === 'K') return (v / 1000).toFixed(1) + 'M';
+    if (unit === '%') return v.toFixed(2) + '%';
+    return v.toLocaleString();
+  };
+  makeChartClickable(chartId, color, (index) => {
+    const r = data[index];
+    if (!r) return null;
+    const prev = data[index - 1];
+    const mom = prev && prev.value ? (r.value - prev.value) / prev.value : null;
+    const curDate = new Date(r.date + 'T00:00:00');
+    const targetYoy = new Date(curDate);
+    targetYoy.setDate(targetYoy.getDate() - 365);
+    let closest = null, closestDiff = Infinity;
+    for (let i = 0; i < index; i++) {
+      const d = new Date(data[i].date + 'T00:00:00');
+      const diff = Math.abs(d - targetYoy);
+      if (diff < closestDiff && diff < 45 * 86400000) { closestDiff = diff; closest = data[i]; }
+    }
+    const yoy = closest && closest.value ? (r.value - closest.value) / closest.value : null;
+    return {
+      dateLabel: label + ' — ' + curDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      valLabel: fmtVal(r.value),
+      changes: [
+        { label: 'Prior Period', text: mom == null ? 'N/A' : fmtYoy(mom), cls: mom == null ? 'neu' : yoyClass(mom) },
+        { label: 'YoY', text: yoy == null ? 'N/A' : fmtYoy(yoy), cls: yoy == null ? 'neu' : yoyClass(yoy) }
+      ]
+    };
+  });
+}
 
 async function fetchFredSeries(id) {
   const cacheKey = 'fred_' + id;
@@ -2312,6 +2517,7 @@ async function fetchFredSeries(id) {
 }
 
 async function loadAndRenderEcon() {
+  renderEconRangeButtons();
   if (econLoaded && Object.keys(fredData).length > 0) { renderEcon(); return; }
 
   const loadEl = document.getElementById('econ-loading');
@@ -2380,7 +2586,7 @@ const recessionPlugin = {
 
 function mkEconChart(canvasId, data, color, unit) {
   if (!data || !data.length) return;
-  if (charts[canvasId]) charts[canvasId].destroy();
+  destroyChart(canvasId);
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
 
@@ -2453,9 +2659,12 @@ function renderEcon() {
   document.getElementById('econ-recess-kpis').innerHTML = recessSeries.map(s => econKpi(s)).join('');
 
   // Charts
+  renderEconRangeButtons();
   FRED_SERIES.forEach(s => {
     if (s.chart && fredData[s.id]) {
-      mkEconChart(s.chart, fredData[s.id], s.color, s.unit);
+      const sliced = econSlice(fredData[s.id]);
+      mkEconChart(s.chart, sliced, s.color, s.unit);
+      attachEconChartDetail(s.chart, sliced, s.label, s.unit, s.color);
     }
   });
 }
@@ -2513,13 +2722,11 @@ async function init() {
     await loadMbaFromRepo();
     await loadMbaData();
 
-    fetchCSV('Weekly', CSV_SOURCES.weekly).then(weeklyText => {
-      if (weeklyText) {
-        processWeeklyInventory(parseCSV(weeklyText));
-        updateStatus('Weekly', 'ok', 'Ready (' + weeklyInventoryData.length + ' rows)');
-        if (document.getElementById('mba-inv-toggle')?.checked) renderMba();
-      }
-    }).catch(e => console.warn('Weekly inventory load error:', e));
+    fetchFredSeries('MORTGAGE30US').then(data => {
+      fredData['MORTGAGE30US'] = data;
+      updateStatus('MORTGAGE30US', 'ok', 'Ready (' + data.length + ' rows)');
+      if (document.getElementById('mba-rate-toggle')?.checked) renderMba();
+    }).catch(e => console.warn('Mortgage rate load error:', e));
 
     // Load cached cancellation data (IndexedDB first, then repo)
     await loadCancelData();
