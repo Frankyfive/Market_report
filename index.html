@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Market Intelligence Report | Cairn Analytics</title>
+<title>Market Intelligence Report | Franky Five Analytics</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <style>
@@ -483,7 +483,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div class="chart-card"><div class="chart-title">Credit Card Delinquency (%)</div><div class="chart-wrap"><canvas id="econ-cc"></canvas></div></div>
     <div class="chart-card"><div class="chart-title">Single-Family Home Delinquency (%)</div><div class="chart-wrap"><canvas id="econ-sfh"></canvas></div></div>
     <div class="chart-card"><div class="chart-title">Business Loan Delinquency (%)</div><div class="chart-wrap"><canvas id="econ-biz"></canvas></div></div>
-    <div class="chart-card"><div class="chart-title">Auto Loan Delinquency (%)</div><div class="chart-wrap"><canvas id="econ-auto"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">All Loan Delinquency (%)</div><div class="chart-wrap"><canvas id="econ-auto"></canvas></div></div>
   </div>
 
   <!-- AMERICAN LIFESTYLE -->
@@ -2087,7 +2087,7 @@ const FRED_SERIES = [
   { id:'DRCCLACBS', label:'Credit Card Delinq.', unit:'%', chart:'econ-cc', section:'loans', color:'#f87171' },
   { id:'DRSFRMACBS', label:'Home Delinq.', unit:'%', chart:'econ-sfh', section:'loans', color:'#34d399' },
   { id:'DRBLACBS', label:'Business Delinq.', unit:'%', chart:'econ-biz', section:'loans', color:'#a78bfa' },
-  { id:'DRALACBS', label:'Auto Delinq.', unit:'%', chart:'econ-auto', section:'loans', color:'#f97316' },
+  { id:'DRALACBS', label:'All Loans Delinq.', unit:'%', chart:'econ-auto', section:'loans', color:'#f97316' },
   { id:'UMCSENT', label:'Consumer Sentiment', unit:'idx', chart:'econ-sent', section:'life', color:'#38bdf8' },
   { id:'MICH', label:'Inflation Expect.', unit:'%', chart:'econ-infl', section:'life', color:'#f87171' },
   { id:'STLFSI4', label:'Financial Stress', unit:'idx', chart:'econ-stress', section:'life', color:'#f97316' },
