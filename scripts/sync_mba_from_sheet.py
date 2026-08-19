@@ -11,7 +11,7 @@ import re
 import sys
 import urllib.request
 
-SHEET_ID = "1tn8zNXHqHe8RmqX_s031AlxCMJfoKftrqK5Jokksoe8"
+SHEET_ID = "1FmPkQiAJXP2NwaAudW4nYBUzL8RQdQxt8shqxkBaC5Y"
 SHEET_CSV_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid=0"
 
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
