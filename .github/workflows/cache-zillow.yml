@@ -1,0 +1,69 @@
+name: Cache Zillow CSVs
+
+on:
+  schedule:
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cache-zillow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create data directory
+        run: mkdir -p data/cache/zillow
+
+      - name: Download Zillow research CSVs
+        run: |
+          set -e
+          BASE="https://files.zillowstatic.com/research/public_csvs"
+          declare -A FILES=(
+            [total_monthly_payment_5pct.csv]="$BASE/total_monthly_payment/Metro_total_monthly_payment_downpayment_0.05_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
+            [total_monthly_payment_10pct.csv]="$BASE/total_monthly_payment/Metro_total_monthly_payment_downpayment_0.10_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
+            [total_monthly_payment_20pct.csv]="$BASE/total_monthly_payment/Metro_total_monthly_payment_downpayment_0.20_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
+            [sales_count_monthly.csv]="$BASE/sales_count_now/Metro_sales_count_now_uc_sfrcondo_month.csv"
+            [sales_count_weekly.csv]="$BASE/sales_count_raw/Metro_sales_count_raw_uc_sfrcondo_sm_week.csv"
+            [inventory_monthly.csv]="$BASE/invt_fs/Metro_invt_fs_uc_sfrcondo_sm_month.csv"
+            [inventory_weekly.csv]="$BASE/invt_fs/Metro_invt_fs_uc_sfrcondo_sm_week.csv"
+            [new_listings_monthly.csv]="$BASE/new_listings/Metro_new_listings_uc_sfrcondo_sm_month.csv"
+            [new_listings_weekly.csv]="$BASE/new_listings/Metro_new_listings_uc_sfrcondo_sm_week.csv"
+            [new_pending_monthly.csv]="$BASE/new_pending/Metro_new_pending_uc_sfrcondo_month.csv"
+            [new_pending_weekly.csv]="$BASE/new_pending/Metro_new_pending_uc_sfrcondo_sm_week.csv"
+            [days_to_pending_monthly.csv]="$BASE/mean_doz_pending/Metro_mean_doz_pending_uc_sfrcondo_sm_month.csv"
+            [days_to_pending_weekly.csv]="$BASE/mean_doz_pending/Metro_mean_doz_pending_uc_sfrcondo_sm_week.csv"
+            [new_construction_sales_count.csv]="$BASE/new_con_sales_count_raw/Metro_new_con_sales_count_raw_uc_sfrcondo_month.csv"
+            [new_construction_median_price.csv]="$BASE/new_con_median_sale_price/Metro_new_con_median_sale_price_uc_sfrcondo_month.csv"
+            [new_construction_mean_price.csv]="$BASE/new_con_mean_sale_price/Metro_new_con_mean_sale_price_uc_sfrcondo_month.csv"
+            [new_homeowner_income_needed.csv]="$BASE/new_homeowner_income_needed/Metro_new_homeowner_income_needed_downpayment_0.20_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
+            [new_renter_income_needed.csv]="$BASE/new_renter_income_needed/Metro_new_renter_income_needed_uc_sfrcondomfr_sm_sa_month.csv"
+            [affordable_price.csv]="$BASE/affordable_price/Metro_affordable_price_downpayment_0.20_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
+            [years_to_save.csv]="$BASE/years_to_save/Metro_years_to_save_downpayment_0.20_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
+            [new_homeowner_affordability.csv]="$BASE/new_homeowner_affordability/Metro_new_homeowner_affordability_downpayment_0.20_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
+            [new_renter_affordability.csv]="$BASE/new_renter_affordability/Metro_new_renter_affordability_uc_sfrcondomfr_sm_sa_month.csv"
+          )
+
+          for NAME in "${!FILES[@]}"; do
+            URL="${FILES[$NAME]}"
+            echo "Fetching $NAME..."
+            curl -sL -f --retry 3 --retry-delay 2 -o "data/cache/zillow/${NAME}" "$URL"
+            echo "  $NAME: $(wc -l < "data/cache/zillow/${NAME}") rows"
+          done
+
+      - name: Record timestamp
+        run: |
+          echo "{\"last_updated\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > data/cache/zillow/manifest.json
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/cache/zillow/
+          git diff --staged --quiet || git commit -m "Cache Zillow CSVs - $(date -u +%Y-%m-%d)"
+          git push
