@@ -128,6 +128,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
     <button onclick="forceRefresh()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;font-size:9px;cursor:pointer;font-weight:600;" title="Clear browser cache and reload all data">Force Refresh</button>
+    <div class="badge">afranco Analytics</div>
   </div>
 </div>
 
@@ -557,7 +558,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 </div>
 
 <div class="footer">
-  Realtor.com Market Data | Auto-updating |
+  Realtor.com Market Data | afranco Analytics | Auto-updating |
   Source: realtor.com/research/data | MBA Weekly Applications Survey
   <br>Data cached locally via IndexedDB. Last refresh: <span id="footer-refresh">-</span>
 </div>
@@ -655,7 +656,7 @@ function setChartRange(months) {
 // ============================================================
 // IndexedDB Cache
 // ============================================================
-const DB_NAME = 'market_report_db';
+const DB_NAME = 'afranco_market_db';
 const DB_VERSION = 2;
 let db;
 
