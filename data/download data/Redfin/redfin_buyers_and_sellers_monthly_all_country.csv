@@ -1,0 +1,97 @@
+LAST UPDATED,FREQUENCY,PERIOD BEGIN,PERIOD END,REGION TYPE,REGION NAME,PROPERTY TYPE,BALANCE OF POWER,BUYERS,BUYERS YOY (%),SELLERS,SELLERS YOY (%),BUYER-SELLER RATIO,BUYER-SELLER RATIO YOY (%),SELLER-BUYER % DIFFERENCE,SELLER-BUYER % DIFFERENCE YOY (PPTS)
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,Midwest Region,All Residential,Buyer's Market,243088,-1.01,269940,5.21,0.9,-5.66,11.05,6.57
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,Midwest Region,All Residential,Balanced Market,249271,1.67,267928,4.44,0.93,-2.53,7.48,2.84
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,Midwest Region,All Residential,Balanced Market,251462,2.08,266550,5.37,0.94,-3.05,6,3.32
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,Midwest Region,All Residential,Balanced Market,248572,-2.02,263581,4.79,0.94,-6.55,6.04,6.89
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,Midwest Region,All Residential,Balanced Market,246828,0.16,261438,5.06,0.94,-4.61,5.92,4.94
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,Midwest Region,All Residential,Balanced Market,246948,0.9,260054,5.04,0.95,-3.89,5.31,4.15
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,Midwest Region,Condo/Co-op,Buyer's Market,21910,-2.48,27712,2.8,0.79,-4.28,26.48,6.5
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,Midwest Region,Condo/Co-op,Buyer's Market,22445,0.82,27758,3.21,0.81,-1.91,23.67,2.86
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,Midwest Region,Condo/Co-op,Buyer's Market,23116,4.38,27692,4.31,0.83,0.05,19.79,-0.07
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,Midwest Region,Condo/Co-op,Buyer's Market,22239,-3.59,27370,3.79,0.81,-6.22,23.07,8.75
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,Midwest Region,Condo/Co-op,Buyer's Market,22177,-3.31,27195,3.72,0.82,-5.92,22.63,8.31
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,Midwest Region,Condo/Co-op,Buyer's Market,22468,-2.34,27168,4.15,0.83,-5.49,20.91,7.53
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,Midwest Region,Single Family Residential,Balanced Market,203686,-0.43,220219,5.48,0.92,-5.49,8.12,6.06
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,Midwest Region,Single Family Residential,Balanced Market,208079,1.57,218181,4.14,0.95,-2.41,4.85,2.59
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,Midwest Region,Single Family Residential,Balanced Market,209230,1.89,217352,5.27,0.96,-3.2,3.88,3.34
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,Midwest Region,Single Family Residential,Balanced Market,206920,-2.38,214666,4.2,0.96,-6.49,3.74,6.54
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,Midwest Region,Single Family Residential,Balanced Market,205995,0.45,213213,4.62,0.97,-4.01,3.5,4.13
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,Midwest Region,Single Family Residential,Balanced Market,206112,1.39,211676,4.53,0.97,-3.02,2.7,3.09
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,Midwest Region,Townhouse,Buyer's Market,9165,-6.23,11646,8.54,0.79,-12.39,27.07,17.29
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,Midwest Region,Townhouse,Buyer's Market,9509,0.44,11569,8.67,0.82,-6.74,21.67,9.22
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,Midwest Region,Townhouse,Buyer's Market,9941,3.07,11450,9.01,0.87,-5,15.17,6.27
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,Midwest Region,Townhouse,Buyer's Market,9489,0.22,11239,8.3,0.84,-6.8,18.44,8.83
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,Midwest Region,Townhouse,Buyer's Market,9414,2.14,11115,7.44,0.85,-4.4,18.06,5.83
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,Midwest Region,Townhouse,Buyer's Market,9405,-1.83,11078,6.58,0.85,-7.27,17.79,9.29
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,Northeast Region,All Residential,Balanced Market,184480,-0.9,176347,5.8,1.05,-7.06,-4.41,6.05
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,Northeast Region,All Residential,Balanced Market,181426,-3.81,175467,5.56,1.03,-10.07,-3.28,8.58
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,Northeast Region,All Residential,Balanced Market,179674,-4.12,174883,5.74,1.03,-10.57,-2.67,9.08
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,Northeast Region,All Residential,Balanced Market,171911,-11.44,172366,4.46,1,-17.91,0.26,15.27
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,Northeast Region,All Residential,Balanced Market,169866,-9.76,171947,5.23,0.99,-16.41,1.22,14.42
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,Northeast Region,All Residential,Balanced Market,170229,-8.44,172834,6.95,0.98,-16.56,1.53,14.61
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,Northeast Region,Condo/Co-op,Buyer's Market,26233,0.06,33254,17.84,0.79,-14.02,26.77,19.13
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,Northeast Region,Condo/Co-op,Buyer's Market,25909,-0.15,32868,17.45,0.79,-13.9,26.86,19.01
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,Northeast Region,Condo/Co-op,Buyer's Market,25671,-0.95,32626,16.96,0.79,-14.22,27.09,19.46
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,Northeast Region,Condo/Co-op,Buyer's Market,24632,-8.85,31414,12.92,0.78,-18.72,27.53,24.58
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,Northeast Region,Condo/Co-op,Buyer's Market,24206,-9.19,30530,10.87,0.79,-17.51,26.13,22.82
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,Northeast Region,Condo/Co-op,Buyer's Market,23608,-11.25,30780,14.46,0.77,-22.21,30.38,29.28
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,Northeast Region,Single Family Residential,Seller's Market,128204,-0.91,112936,3.53,1.14,-5.09,-11.91,3.78
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,Northeast Region,Single Family Residential,Seller's Market,126099,-3.94,111880,2.29,1.13,-7.31,-11.28,5.4
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,Northeast Region,Single Family Residential,Seller's Market,124662,-3.98,111480,2.73,1.12,-7.82,-10.57,5.84
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,Northeast Region,Single Family Residential,Balanced Market,118741,-12.07,109764,1.07,1.08,-16.16,-7.56,12.02
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,Northeast Region,Single Family Residential,Balanced Market,117457,-10.29,109661,2.23,1.07,-14.94,-6.64,11.43
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,Northeast Region,Single Family Residential,Balanced Market,118076,-8.35,110133,3.37,1.07,-13.71,-6.73,10.58
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,Northeast Region,Townhouse,Balanced Market,17786,0.87,17220,12.71,1.03,-12.12,-3.18,10.17
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,Northeast Region,Townhouse,Balanced Market,17263,-4.12,16888,9.76,1.02,-14.8,-2.17,12.37
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,Northeast Region,Townhouse,Balanced Market,17199,-4.67,16701,8.22,1.03,-13.92,-2.9,11.57
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,Northeast Region,Townhouse,Balanced Market,16586,-10.91,16389,4.69,1.01,-17.72,-1.19,14.72
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,Northeast Region,Townhouse,Balanced Market,16509,-8.57,16206,3.25,1.02,-13.16,-1.84,11.23
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,Northeast Region,Townhouse,Balanced Market,16359,-8.31,16311,5.85,1,-15.48,-0.3,13.33
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,South Region,All Residential,Buyer's Market,449879,-0.83,820809,0.36,0.55,-0.66,82.45,2.17
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,South Region,All Residential,Buyer's Market,456650,0.29,817351,0.26,0.56,0.02,78.99,-0.06
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,South Region,All Residential,Buyer's Market,453119,0.71,816549,1.95,0.55,-0.69,80.21,2.2
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,South Region,All Residential,Buyer's Market,448019,-4.07,810950,3.11,0.55,-4.13,81.01,12.59
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,South Region,All Residential,Buyer's Market,445782,-2.77,805177,4.45,0.55,-4.11,80.62,12.49
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,South Region,All Residential,Buyer's Market,446755,-0.76,802101,6.56,0.56,-4.11,79.54,12.34
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,South Region,Condo/Co-op,Buyer's Market,33070,2.88,93534,-2.4,0.35,1.81,182.83,-15.29
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,South Region,Condo/Co-op,Buyer's Market,33529,7.06,93238,-2.81,0.36,3.32,178.09,-28.24
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,South Region,Condo/Co-op,Buyer's Market,34077,15.26,93208,-1.75,0.37,5.4,173.52,-47.36
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,South Region,Condo/Co-op,Buyer's Market,33363,7.57,93203,0.07,0.36,2.5,179.36,-20.95
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,South Region,Condo/Co-op,Buyer's Market,32670,0.18,93203,2.02,0.35,-0.64,185.29,5.14
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,South Region,Condo/Co-op,Buyer's Market,33077,3.37,93463,4.6,0.35,-0.42,182.56,3.34
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,South Region,Single Family Residential,Buyer's Market,377984,-1.08,645142,-0.2,0.59,-0.52,70.68,1.51
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,South Region,Single Family Residential,Buyer's Market,383024,-0.13,646112,0.29,0.59,-0.25,68.69,0.7
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,South Region,Single Family Residential,Buyer's Market,381353,0.2,648218,1.94,0.59,-1.02,69.98,2.89
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,South Region,Single Family Residential,Buyer's Market,377593,-4.52,645179,3.23,0.59,-4.75,70.87,12.84
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,South Region,Single Family Residential,Buyer's Market,375048,-3.15,639342,4.39,0.59,-4.57,70.47,12.32
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,South Region,Single Family Residential,Buyer's Market,375522,-1.08,636655,6.28,0.59,-4.39,69.54,11.73
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,South Region,Townhouse,Buyer's Market,33921,-2.61,63373,5.8,0.54,-4.62,86.82,14.86
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,South Region,Townhouse,Buyer's Market,34630,-0.85,62799,5.16,0.55,-3.34,81.34,10.35
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,South Region,Townhouse,Buyer's Market,34477,0.77,62481,6.9,0.55,-3.35,81.22,10.38
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,South Region,Townhouse,Buyer's Market,34649,-4.29,61795,8.09,0.56,-7.25,78.34,20.43
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,South Region,Townhouse,Buyer's Market,34572,-2.38,61031,9.47,0.57,-6.88,76.53,19.11
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,South Region,Townhouse,Buyer's Market,33329,-3.23,60410,11.89,0.55,-8.62,81.25,24.49
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,West Region,All Residential,Buyer's Market,203984,0.71,325220,-2.17,0.63,1.79,59.43,-4.69
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,West Region,All Residential,Buyer's Market,201771,-2.98,324498,-2.73,0.62,-0.16,60.83,0.4
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,West Region,All Residential,Buyer's Market,202497,-0.48,327340,0.34,0.62,-0.51,61.65,1.32
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,West Region,All Residential,Buyer's Market,203178,-6.75,325968,2.24,0.62,-6.01,60.43,14.1
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,West Region,All Residential,Buyer's Market,203191,-6.36,322545,3.41,0.63,-6.58,58.74,15
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,West Region,All Residential,Buyer's Market,202483,-4.87,318231,4.5,0.64,-6.27,57.16,14.09
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,West Region,Condo/Co-op,Balanced Market,NA,NA,NA,NA,NA,NA,NA,NA
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,West Region,Condo/Co-op,Balanced Market,NA,NA,NA,NA,NA,NA,NA,NA
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,West Region,Condo/Co-op,Balanced Market,NA,NA,NA,NA,NA,NA,NA,NA
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,West Region,Condo/Co-op,Balanced Market,NA,NA,NA,NA,NA,NA,NA,NA
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,West Region,Condo/Co-op,Balanced Market,NA,NA,NA,NA,NA,NA,NA,NA
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,West Region,Condo/Co-op,Balanced Market,NA,NA,NA,NA,NA,NA,NA,NA
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,West Region,Single Family Residential,Buyer's Market,165075,0.62,245748,-3.6,0.67,2.82,48.87,-6.53
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,West Region,Single Family Residential,Buyer's Market,164248,-2.02,245791,-3.91,0.67,1.29,49.65,-2.94
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,West Region,Single Family Residential,Buyer's Market,164326,0.05,248559,-0.58,0.66,0.42,51.26,-0.96
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,West Region,Single Family Residential,Buyer's Market,164500,-5.92,247952,1.41,0.66,-5.17,50.73,10.9
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,West Region,Single Family Residential,Buyer's Market,164254,-4.72,245670,2.73,0.67,-5.23,49.57,10.84
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,West Region,Single Family Residential,Buyer's Market,163608,-3.34,242877,3.95,0.67,-5.08,48.45,10.41
+2026-07-03,Monthly,2026-06-01,2026-06-30,Census Region,West Region,Townhouse,Buyer's Market,13637,0.23,24145,3.37,0.56,-1.77,77.05,5.38
+2026-07-03,Monthly,2026-05-01,2026-05-31,Census Region,West Region,Townhouse,Buyer's Market,13072,-9.05,23960,2.89,0.55,-7.17,83.28,21.28
+2026-07-03,Monthly,2026-04-01,2026-04-30,Census Region,West Region,Townhouse,Buyer's Market,13507,-2.23,24069,5.43,0.56,-4.4,78.2,12.95
+2026-07-03,Monthly,2026-03-01,2026-03-31,Census Region,West Region,Townhouse,Buyer's Market,13764,-9.35,24071,7.55,0.57,-10.65,74.89,27.47
+2026-07-03,Monthly,2026-02-01,2026-02-28,Census Region,West Region,Townhouse,Buyer's Market,13772,-9.99,24051,10.27,0.57,-12.89,74.64,32.09
+2026-07-03,Monthly,2026-01-01,2026-01-31,Census Region,West Region,Townhouse,Buyer's Market,13917,-7.92,23726,12.89,0.59,-13.26,70.47,31.43
