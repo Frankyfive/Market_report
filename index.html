@@ -127,7 +127,6 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
     <button onclick="forceRefresh()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;font-size:9px;cursor:pointer;font-weight:600;" title="Clear browser cache and reload all data">Force Refresh</button>
-    <div class="badge">Cairn Analytics</div>
   </div>
 </div>
 
@@ -285,7 +284,9 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
           Choose CSV
           <input type="file" accept=".csv" id="cancel-upload" onchange="handleCancelUpload(event)" style="display:none;"/>
         </label>
-        <button class="btn-add" style="background:var(--purple);font-size:9px;padding:5px 12px;" onclick="exportCancelJson()">Export JSON to Repo</button>
+        <button class="btn-add" style="background:var(--green);font-size:9px;padding:5px 12px;" onclick="pushCancelToRepo(this)">Push to GitHub</button>
+        <button class="btn-add" style="background:var(--purple);font-size:9px;padding:5px 12px;" onclick="exportCancelJson()">Download JSON</button>
+        <span onclick="resetGithubToken()" title="Clear saved GitHub token" style="cursor:pointer;color:var(--muted);font-size:11px;">🔑</span>
         <span style="color:var(--muted);font-size:10px;" id="cancel-file-info"></span>
       </div>
     </div>
@@ -555,7 +556,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 </div>
 
 <div class="footer">
-  Realtor.com Market Data | Cairn Analytics | Auto-updating |
+  Realtor.com Market Data | Auto-updating |
   Source: realtor.com/research/data | MBA Weekly Applications Survey
   <br>Data cached locally via IndexedDB. Last refresh: <span id="footer-refresh">-</span>
 </div>
@@ -653,7 +654,7 @@ function setChartRange(months) {
 // ============================================================
 // IndexedDB Cache
 // ============================================================
-const DB_NAME = 'cairn_market_db';
+const DB_NAME = 'market_report_db';
 const DB_VERSION = 2;
 let db;
 
@@ -1965,6 +1966,89 @@ function exportCancelJson() {
   a.click();
   URL.revokeObjectURL(a.href);
   showToast('Exported ' + cancelData.length + ' cancellation records');
+}
+
+// ============================================================
+// GitHub API push - commits manual-upload data straight to the
+// repo so other browsers see it, without a local git step.
+// ============================================================
+const GH_OWNER = 'Frankyfive';
+const GH_REPO = 'Market_report';
+const GH_BRANCH = 'main';
+const GH_TOKEN_KEY = 'gh_pat';
+
+function getGithubToken() {
+  let token = localStorage.getItem(GH_TOKEN_KEY);
+  if (!token) {
+    token = prompt(
+      'Paste a GitHub Personal Access Token with "Contents: Read and write" access to ' +
+      GH_OWNER + '/' + GH_REPO + '.\n\n' +
+      'Stored only in this browser (localStorage) - never written to the page or sent anywhere but api.github.com.'
+    );
+    if (token) localStorage.setItem(GH_TOKEN_KEY, token.trim());
+  }
+  return token ? token.trim() : null;
+}
+
+function resetGithubToken() {
+  localStorage.removeItem(GH_TOKEN_KEY);
+  showToast('GitHub token cleared');
+}
+
+function utf8ToBase64(str) {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
+// Create or update a file under data/manual/ via the GitHub Contents API
+async function pushJsonToRepo(filename, jsonString, recordCount, btn) {
+  const token = getGithubToken();
+  if (!token) { showToast('Push cancelled - no token provided'); return; }
+
+  const path = 'data/manual/' + filename;
+  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`;
+  const headers = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' };
+
+  const label = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Pushing...'; }
+
+  try {
+    let sha;
+    const getResp = await fetch(url + '?ref=' + GH_BRANCH, { headers });
+    if (getResp.ok) {
+      sha = (await getResp.json()).sha;
+    } else if (getResp.status !== 404) {
+      throw new Error('Lookup failed: HTTP ' + getResp.status);
+    }
+
+    const putResp = await fetch(url, {
+      method: 'PUT',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: `Update ${filename} via in-page upload (${recordCount} records) - ${new Date().toISOString().slice(0, 10)}`,
+        content: utf8ToBase64(jsonString),
+        branch: GH_BRANCH,
+        ...(sha ? { sha } : {})
+      })
+    });
+
+    if (!putResp.ok) {
+      const err = await putResp.json().catch(() => ({}));
+      if (putResp.status === 401) { resetGithubToken(); throw new Error('Bad token - cleared, try again'); }
+      throw new Error(err.message || ('HTTP ' + putResp.status));
+    }
+
+    showToast(`Pushed ${filename} to GitHub (${recordCount} records)`);
+  } catch (e) {
+    console.error('GitHub push failed', e);
+    showToast('Push failed: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = label; }
+  }
+}
+
+async function pushCancelToRepo(btn) {
+  if (!cancelData.length) { showToast('No cancellation data to push'); return; }
+  await pushJsonToRepo('redfin_cancel.json', JSON.stringify(cancelData, null, 2), cancelData.length, btn);
 }
 
 // Load MBA manual entries from repo (for other users / fresh browsers)
