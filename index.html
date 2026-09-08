@@ -124,7 +124,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 <div class="site-header">
   <div>
     <h1>MARKET INTELLIGENCE REPORT</h1>
-    <div class="sub">Realtor.com Live Data | Auto-updating | <span id="header-date"></span></div>
+    <div class="sub">Realtor.com &middot; Redfin &middot; Zillow | Auto-updating | <span id="header-date"></span></div>
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
     <button onclick="forceRefresh()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:6px;font-size:9px;cursor:pointer;font-weight:600;" title="Clear browser cache and reload all data">Force Refresh</button>
@@ -135,20 +135,46 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 <div class="status-bar" id="status-bar"></div>
 
 <div class="tabs">
-  <div class="tab active" onclick="showPage('overview',this)">National Overview</div>
-  <div class="tab" onclick="showPage('metros',this)">Metro Markets</div>
-  <div class="tab" onclick="showPage('trends',this)">Metro Trends</div>
+  <div class="tab active" onclick="showPage('master',this)">Master Overview</div>
+  <div class="tab" onclick="showPage('overview',this)">Realtor.com Overview</div>
+  <div class="tab" onclick="showPage('trends',this)">Metro Trends - Realtor.com</div>
   <div class="tab" onclick="showPage('mba',this)">MBA Purchase Index</div>
   <div class="tab" onclick="showPage('cancel',this)">Contract Cancellations</div>
   <div class="tab" onclick="showPage('txhousing',this)">Texas Housing</div>
   <div class="tab" onclick="showPage('rftracker',this)">Redfin Tracker</div>
   <div class="tab" onclick="showPage('zillow-monthly',this)">Zillow Monthly</div>
   <div class="tab" onclick="showPage('zillow-weekly',this)">Zillow Weekly</div>
+  <div class="tab" onclick="showPage('zillow-deep',this)">Zillow Deep Dive</div>
   <div class="tab" onclick="showPage('econ',this)">Economic Indicators</div>
 </div>
 
-<!-- NATIONAL OVERVIEW -->
-<div class="page active" id="page-overview">
+<!-- MASTER OVERVIEW - Realtor.com vs Redfin vs Zillow -->
+<div class="page active" id="page-master">
+  <div style="margin-bottom:12px;margin-top:4px;"><div class="geo-btns" id="master-geo-btns"></div></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+    <div class="section-title" id="master-geo-label" style="margin-bottom:0;">UNITED STATES</div>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+      <div class="range-btns" id="master-scale-btns"></div>
+      <div class="range-btns" id="master-range-btns"></div>
+    </div>
+  </div>
+  <div id="master-legend" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;"></div>
+  <div id="master-loading" style="text-align:center;padding:40px;color:var(--muted);display:none;">
+    <div class="spinner" style="margin:0 auto 12px;"></div>
+    <div>Loading data from all three sources...</div>
+  </div>
+  <div style="overflow-x:auto;margin-bottom:22px;">
+    <table class="metro-table" id="master-table">
+      <thead id="master-thead"></thead>
+      <tbody id="master-tbody"></tbody>
+    </table>
+  </div>
+  <div class="charts-grid" id="master-charts"></div>
+  <div class="mba-note" id="master-note"></div>
+</div>
+
+<!-- REALTOR.COM OVERVIEW -->
+<div class="page" id="page-overview">
   <div style="margin-bottom:12px;margin-top:4px;">
     <div class="geo-btns" id="geo-btns"></div>
   </div>
@@ -176,25 +202,6 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     </div>
   </div>
 </div>
-<div class="page" id="page-metros">
-  <div class="section-title" style="margin-top:4px;" id="metro-snap-title">METRO SNAPSHOT</div>
-  <div style="overflow-x:auto;">
-  <table class="metro-table">
-    <thead><tr>
-      <th>Metro</th>
-      <th>Med. List Price</th><th>YoY</th>
-      <th>Active Listings</th><th>YoY</th>
-      <th>New Listings</th><th>YoY</th>
-      <th>Days on Mkt</th><th>YoY</th>
-      <th>Price Cut %</th><th>YoY</th>
-      <th>Pending</th><th>YoY</th>
-      <th>Pend. Ratio</th><th>YoY</th>
-    </tr></thead>
-    <tbody id="metro-tbody"></tbody>
-  </table>
-  </div>
-</div>
-
 <!-- METRO TRENDS -->
 <div class="page" id="page-trends">
   <div style="margin-bottom:12px;margin-top:4px;"><div class="geo-btns" id="metro-btns"></div></div>
@@ -538,6 +545,21 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <div class="mba-note">Source: Zillow Research (Housing Data) | zillow.com/research/data | Weekly cadence, cached daily</div>
 </div>
 
+<!-- ZILLOW DEEP DIVE -->
+<div class="page" id="page-zillow-deep">
+  <div style="margin-bottom:12px;margin-top:4px;"><div class="geo-btns" id="zd-geo-btns"></div></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+    <div class="section-title" id="zd-geo-label" style="margin-bottom:0;">UNITED STATES</div>
+    <div class="range-btns" id="zd-range-btns"></div>
+  </div>
+  <div id="zd-loading" style="text-align:center;padding:40px;color:var(--muted);display:none;">
+    <div class="spinner" style="margin:0 auto 12px;"></div>
+    <div>Loading Zillow deep-dive data...</div>
+  </div>
+  <div id="zd-sections"></div>
+  <div class="mba-note">Source: Zillow Research (Housing Data) | zillow.com/research/data | Monthly cadence, cached weekly</div>
+</div>
+
 <!-- ECONOMIC INDICATORS (FRED) -->
 <div class="page" id="page-econ">
   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
@@ -604,8 +626,8 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 </div>
 
 <div class="footer">
-  Realtor.com Market Data | afranco analytics | Auto-updating |
-  Source: realtor.com/research/data | MBA Weekly Applications Survey
+  Multi-Source Market Data | afranco analytics | Auto-updating |
+  Sources: realtor.com/research/data | redfin.com/news/data-center | zillow.com/research/data | MBA Weekly Applications Survey
   <br>Data cached locally via IndexedDB. Last refresh: <span id="footer-refresh">-</span>
 </div>
 
@@ -1249,32 +1271,6 @@ function renderOverview(geo) {
   attachChartDetail('ch-dom', slice, 'Median Days on Market', v => Math.round(v) + ' days', 'median_days_on_market', '#f97316');
 }
 
-function renderMetroTable() {
-  const latestDate = DATA.us?.latest?.date;
-  if (latestDate) {
-    document.getElementById('metro-snap-title').textContent = 'METRO SNAPSHOT - ' + yyyymmToLabel(latestDate).toUpperCase();
-  }
-
-  document.getElementById('metro-tbody').innerHTML = METRO_KEYS.map((code, i) => {
-    const m = DATA.metros?.[code];
-    if (!m || !m.latest) return '';
-    const d = m.latest;
-    const color = METRO_COLORS[i];
-    const ratioYoyClass = yoyClass(d.pending_ratio_yy);
-    const ratioYoyStr = d.pending_ratio_yy != null ? (d.pending_ratio_yy > 0 ? '+' : '') + (d.pending_ratio_yy * 100).toFixed(1) + 'pp' : '';
-    return `<tr>
-      <td style="border-left:3px solid ${color}">${m.full}</td>
-      <td>${fmtD(d.median_listing_price)}</td><td class="yoy-cell ${yoyClass(d.median_listing_price_yy)}">${fmtYoy(d.median_listing_price_yy)}</td>
-      <td>${fmtN(d.active_listing_count)}</td><td class="yoy-cell ${yoyClass(d.active_listing_count_yy)}">${fmtYoy(d.active_listing_count_yy)}</td>
-      <td>${fmtN(d.new_listing_count)}</td><td class="yoy-cell ${yoyClass(d.new_listing_count_yy)}">${fmtYoy(d.new_listing_count_yy)}</td>
-      <td>${fmtDays(d.median_days_on_market)}</td><td class="yoy-cell ${yoyClass(d.median_days_on_market_yy)}">${fmtYoy(d.median_days_on_market_yy)}</td>
-      <td>${fmtP(d.price_reduced_share)}</td><td class="yoy-cell ${yoyClass(d.price_reduced_share_yy)}">${fmtYoy(d.price_reduced_share_yy)}</td>
-      <td>${fmtN(d.pending_listing_count)}</td><td class="yoy-cell ${yoyClass(d.pending_listing_count_yy)}">${fmtYoy(d.pending_listing_count_yy)}</td>
-      <td>${fmtP(d.pending_ratio)}</td><td class="yoy-cell ${ratioYoyClass}">${ratioYoyStr}</td>
-    </tr>`;
-  }).join('');
-}
-
 let currentMetro = METRO_KEYS[0];
 
 function buildMetroButtons() {
@@ -1483,6 +1479,8 @@ function showPage(name, el) {
   if (name === 'rftracker') setTimeout(() => renderRfTracker(), 50);
   if (name === 'zillow-monthly') setTimeout(() => initZillowTab('monthly'), 50);
   if (name === 'zillow-weekly') setTimeout(() => initZillowTab('weekly'), 50);
+  if (name === 'zillow-deep') setTimeout(() => initZillowTab('deep'), 50);
+  if (name === 'master') setTimeout(() => initMasterTab(), 50);
   if (name === 'econ') setTimeout(() => loadAndRenderEcon(), 50);
 }
 
@@ -2838,10 +2836,75 @@ const ZILLOW_SERIES = {
   ]
 };
 
+// The deep-dive tab charts everything else Zillow publishes for these regions.
+// All of it is monthly, so it shares zillowData.monthly with the Monthly tab.
+const ZILLOW_DEEP_SECTIONS = [
+  {
+    title: 'Home Values & Rents',
+    note: 'ZHVI is a smoothed, seasonally adjusted measure of the typical home value in the 35th-65th percentile range. ZORI tracks typical asking rents.',
+    series: [
+      { key: 'zhvi', file: 'zhvi.csv', label: 'Home Value Index (ZHVI)', unit: 'dollar', color: '#38bdf8' },
+      { key: 'zori', file: 'zori.csv', label: 'Observed Rent Index (ZORI)', unit: 'dollar', color: '#34d399' },
+      { key: 'median_list_price', file: 'median_list_price_monthly.csv', label: 'Median List Price', unit: 'dollar', color: '#a78bfa' },
+      { key: 'median_sale_price', file: 'median_sale_price_monthly.csv', label: 'Median Sale Price', unit: 'dollar', color: '#f97316' },
+      { key: 'mean_sale_price', file: 'mean_sale_price_monthly.csv', label: 'Mean Sale Price', unit: 'dollar', color: '#facc15' }
+    ]
+  },
+  {
+    title: 'Negotiation & Market Heat',
+    note: 'A sale-to-list ratio above 100% means the typical home sold over asking. The market heat index runs 0-100; higher readings favor sellers.',
+    series: [
+      { key: 'sale_to_list_ratio', file: 'sale_to_list_ratio.csv', label: 'Median Sale-to-List Ratio', unit: 'ratio', color: '#38bdf8' },
+      { key: 'pct_sold_above_list', file: 'pct_sold_above_list.csv', label: 'Share Sold Above List', unit: 'pct', color: '#34d399' },
+      { key: 'pct_sold_below_list', file: 'pct_sold_below_list.csv', label: 'Share Sold Below List', unit: 'pct', color: '#f87171' },
+      { key: 'price_cut_share', file: 'price_cut_share.csv', label: 'Share of Listings with a Price Cut', unit: 'pct', color: '#f97316' },
+      { key: 'market_heat_index', file: 'market_heat_index.csv', label: 'Market Heat Index', unit: 'index', color: '#e879f9' }
+    ]
+  },
+  {
+    title: 'New Construction',
+    note: 'Newly built homes only. Zillow reports these as raw counts, so they are noisier than the smoothed resale series.',
+    series: [
+      { key: 'new_construction_sales_count', file: 'new_construction_sales_count.csv', label: 'New Construction Sales', unit: 'count', color: '#38bdf8' },
+      { key: 'new_construction_median_price', file: 'new_construction_median_price.csv', label: 'New Construction Median Sale Price', unit: 'dollar', color: '#a78bfa' },
+      { key: 'new_construction_mean_price', file: 'new_construction_mean_price.csv', label: 'New Construction Mean Sale Price', unit: 'dollar', color: '#facc15' }
+    ]
+  },
+  {
+    title: 'Affordability',
+    note: 'Homeowner figures assume a 20% down payment on a typical home. Affordability is the share of median household income the payment consumes - lower is more affordable. Years to save is the time needed to save a 20% down payment at a 5% savings rate.',
+    series: [
+      { key: 'affordable_price', file: 'affordable_price.csv', label: 'Affordable Home Price', unit: 'dollar', color: '#38bdf8' },
+      { key: 'new_homeowner_income_needed', file: 'new_homeowner_income_needed.csv', label: 'Income Needed to Buy', unit: 'dollar', color: '#a78bfa' },
+      { key: 'new_homeowner_affordability', file: 'new_homeowner_affordability.csv', label: 'Mortgage Payment as Share of Income', unit: 'pct', color: '#f87171' },
+      { key: 'new_renter_income_needed', file: 'new_renter_income_needed.csv', label: 'Income Needed to Rent', unit: 'dollar', color: '#34d399' },
+      { key: 'new_renter_affordability', file: 'new_renter_affordability.csv', label: 'Rent as Share of Income', unit: 'pct', color: '#f97316' },
+      { key: 'years_to_save', file: 'years_to_save.csv', label: 'Years to Save a Down Payment', unit: 'years', color: '#facc15' }
+    ]
+  },
+  {
+    title: 'Monthly Payment by Down Payment',
+    note: 'Principal, interest, taxes and insurance on a typical home at the prevailing 30-year rate.',
+    series: [
+      { key: 'total_monthly_payment_5pct', file: 'total_monthly_payment_5pct.csv', label: 'Monthly Payment - 5% Down', unit: 'dollar', color: '#f87171' },
+      { key: 'total_monthly_payment_10pct', file: 'total_monthly_payment_10pct.csv', label: 'Monthly Payment - 10% Down', unit: 'dollar', color: '#f97316' },
+      { key: 'total_monthly_payment_20pct', file: 'total_monthly_payment_20pct.csv', label: 'Monthly Payment - 20% Down', unit: 'dollar', color: '#34d399' }
+    ]
+  }
+];
+const ZILLOW_DEEP_SERIES = ZILLOW_DEEP_SECTIONS.reduce((acc, sec) => acc.concat(sec.series), []);
+
+// Canvas/container id prefix per Zillow surface. 'deep' reads zillowData.monthly
+// but keeps its own geo and range selection.
+const ZILLOW_TAB_PREFIX = { monthly: 'zm', weekly: 'zw', deep: 'zd' };
+
 let zillowData = { monthly: {}, weekly: {} }; // zillowData[cadence][seriesKey] = raw parsed CSV rows
-let zillowLoaded = { monthly: false, weekly: false };
-let currentZillowGeo = { monthly: 'us', weekly: 'us' };
-let zillowRangeMonths = { monthly: null, weekly: null };
+let zillowLoaded = { monthly: false, weekly: false, deep: false };
+let currentZillowGeo = { monthly: 'us', weekly: 'us', deep: 'us' };
+let zillowRangeMonths = { monthly: null, weekly: null, deep: null };
+
+// Which cadence bucket a surface's CSVs live in.
+function zillowBucket(tab) { return tab === 'deep' ? 'monthly' : tab; }
 
 async function fetchZillowCsv(cadence, file) {
   const cacheKey = 'zillow_' + cadence + '_' + file;
@@ -2880,24 +2943,35 @@ function extractZillowSeries(rows, geoKey) {
     .filter(r => r.value != null && !isNaN(r.value));
 }
 
-async function loadZillowCadence(cadence) {
-  if (zillowLoaded[cadence]) return;
-  const loadEl = document.getElementById(cadence === 'monthly' ? 'zm-loading' : 'zw-loading');
-  if (loadEl) loadEl.style.display = 'block';
-  for (const s of ZILLOW_SERIES[cadence]) {
-    zillowData[cadence][s.key] = await fetchZillowCsv(cadence, s.file);
+// Fetch only the series not already in memory, so surfaces that share a bucket
+// (Monthly, Deep Dive, Master) never re-download the same CSV.
+async function ensureZillowSeries(bucket, defs) {
+  for (const s of defs) {
+    if (zillowData[bucket][s.key]) continue;
+    zillowData[bucket][s.key] = await fetchZillowCsv(bucket, s.file);
   }
-  zillowLoaded[cadence] = true;
+}
+
+async function loadZillowTab(tab) {
+  if (zillowLoaded[tab]) return;
+  const loadEl = document.getElementById(ZILLOW_TAB_PREFIX[tab] + '-loading');
+  if (loadEl) loadEl.style.display = 'block';
+  await ensureZillowSeries(zillowBucket(tab), tab === 'deep' ? ZILLOW_DEEP_SERIES : ZILLOW_SERIES[tab]);
+  zillowLoaded[tab] = true;
   if (loadEl) loadEl.style.display = 'none';
 }
 
-async function initZillowTab(cadence) {
-  await loadZillowCadence(cadence);
-  renderZillowTab(cadence);
+async function initZillowTab(tab) {
+  await loadZillowTab(tab);
+  renderZillowSurface(tab);
+}
+
+function renderZillowSurface(tab) {
+  if (tab === 'deep') renderZillowDeep(); else renderZillowTab(tab);
 }
 
 function renderZillowGeoButtons(cadence) {
-  const el = document.getElementById(cadence === 'monthly' ? 'zm-geo-btns' : 'zw-geo-btns');
+  const el = document.getElementById(ZILLOW_TAB_PREFIX[cadence] + '-geo-btns');
   if (!el) return;
   el.innerHTML = ZILLOW_GEO_KEYS.map(g => {
     const active = g === currentZillowGeo[cadence];
@@ -2910,15 +2984,15 @@ function renderZillowGeoButtons(cadence) {
 
 function selectZillowGeo(cadence, geo, btn) {
   currentZillowGeo[cadence] = geo;
-  const containerId = cadence === 'monthly' ? 'zm-geo-btns' : 'zw-geo-btns';
+  const containerId = ZILLOW_TAB_PREFIX[cadence] + '-geo-btns';
   document.querySelectorAll('#' + containerId + ' .geo-btn').forEach(b => { b.classList.remove('active'); b.style.background = ''; b.style.color = ''; b.style.borderColor = ''; });
   const color = geo === 'us' ? '#38bdf8' : METRO_COLORS[METRO_KEYS.indexOf(geo)];
   btn.classList.add('active'); btn.style.background = color; btn.style.color = '#0f172a'; btn.style.borderColor = color;
-  renderZillowTab(cadence);
+  renderZillowSurface(cadence);
 }
 
 function renderZillowRangeButtons(cadence) {
-  const el = document.getElementById(cadence === 'monthly' ? 'zm-range-btns' : 'zw-range-btns');
+  const el = document.getElementById(ZILLOW_TAB_PREFIX[cadence] + '-range-btns');
   if (!el) return;
   el.innerHTML = CHART_RANGE_OPTIONS.map(o =>
     `<button class="range-btn ${o.months === zillowRangeMonths[cadence] ? 'active' : ''}" onclick="setZillowRange('${cadence}',${o.months})">${o.label}</button>`
@@ -2928,7 +3002,7 @@ function renderZillowRangeButtons(cadence) {
 function setZillowRange(cadence, months) {
   zillowRangeMonths[cadence] = months;
   renderZillowRangeButtons(cadence);
-  renderZillowTab(cadence);
+  renderZillowSurface(cadence);
 }
 
 function zillowSlice(cadence, data) {
@@ -2940,9 +3014,27 @@ function zillowSlice(cadence, data) {
 }
 
 function fmtZillowVal(v, unit) {
-  if (v == null) return 'N/A';
-  if (unit === 'days') return Math.round(v) + ' days';
-  return Math.round(v).toLocaleString();
+  if (v == null || isNaN(v)) return 'N/A';
+  switch (unit) {
+    case 'days': return Math.round(v) + ' days';
+    case 'dollar': return '$' + Math.round(v).toLocaleString();
+    case 'pct': case 'ratio': return (v * 100).toFixed(1) + '%';
+    case 'years': return v.toFixed(1) + ' yrs';
+    case 'index': return Math.round(v).toString();
+    default: return Math.round(v).toLocaleString();
+  }
+}
+
+// Compact form of the same value for a chart's y-axis.
+function zillowAxisTick(v, unit) {
+  switch (unit) {
+    case 'days': return Math.round(v) + 'd';
+    case 'dollar': return Math.abs(v) >= 1000 ? '$' + (v / 1000).toFixed(0) + 'K' : '$' + Math.round(v);
+    case 'pct': case 'ratio': return (v * 100).toFixed(0) + '%';
+    case 'years': return v.toFixed(0) + 'y';
+    case 'index': return Math.round(v);
+    default: return Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + 'K' : v;
+  }
 }
 
 function zillowKpiCard(s, series, periodLabel, periodsPerYear) {
@@ -2988,7 +3080,7 @@ function mkZillowChart(canvasId, data, color, unit) {
           callback: function(val, i) { const d = this.getLabelForValue(i); return d ? d.substring(0, 7) : ''; }
         }},
         y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 },
-          callback: v => unit === 'days' ? Math.round(v) + 'd' : (v >= 1000 ? (v / 1000).toFixed(0) + 'K' : v)
+          callback: v => zillowAxisTick(v, unit)
         }}
       }
     }
@@ -3038,17 +3130,412 @@ function renderZillowTab(cadence) {
   if (kpiEl) kpiEl.innerHTML = kpiHtml;
 }
 
+// The deep-dive tab lays out one section per theme, each with its own KPI row
+// and chart grid, so the canvases have to be built before the charts are made.
+function renderZillowDeep() {
+  renderZillowGeoButtons('deep');
+  renderZillowRangeButtons('deep');
+  const geo = currentZillowGeo.deep;
+  const labelEl = document.getElementById('zd-geo-label');
+  if (labelEl) labelEl.textContent = geo === 'us' ? 'UNITED STATES' : TARGET_METROS[geo].full.toUpperCase();
+
+  const container = document.getElementById('zd-sections');
+  if (!container) return;
+
+  ZILLOW_DEEP_SERIES.forEach(s => destroyChart('zd-' + s.key));
+
+  container.innerHTML = ZILLOW_DEEP_SECTIONS.map(sec => `
+    <div style="margin-bottom:26px;">
+      <div class="section-title">${sec.title}</div>
+      <div class="kpi-grid" id="zd-kpi-${slug(sec.title)}"></div>
+      <div class="charts-grid" style="margin-bottom:0;">
+        ${sec.series.map(s => `<div class="chart-card"><div class="chart-title">${s.label} <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="zd-${s.key}"></canvas></div></div>`).join('')}
+      </div>
+      ${sec.note ? `<div class="mba-note">${sec.note}</div>` : ''}
+    </div>`).join('');
+
+  ZILLOW_DEEP_SECTIONS.forEach(sec => {
+    let kpiHtml = '';
+    sec.series.forEach(s => {
+      const rows = zillowData.monthly[s.key] || [];
+      const series = extractZillowSeries(rows, geo);
+      const sliced = zillowSlice('deep', series);
+      kpiHtml += zillowKpiCard(s, series, 'MoM', 12);
+      const color = geo === 'us' ? s.color : (METRO_COLORS[METRO_KEYS.indexOf(geo)] || s.color);
+      mkZillowChart('zd-' + s.key, sliced, color, s.unit);
+      if (sliced.length) attachZillowChartDetail('zd-' + s.key, sliced, s.label, s.unit, color, 'MoM', 12);
+    });
+    const el = document.getElementById('zd-kpi-' + slug(sec.title));
+    if (el) el.innerHTML = kpiHtml;
+  });
+}
+
+function slug(str) { return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+
+// ============================================================
+// MASTER OVERVIEW - Realtor.com vs Redfin vs Zillow
+// ============================================================
+const MASTER_SOURCES = [
+  { key: 'realtor', label: 'Realtor.com', color: '#38bdf8' },
+  { key: 'redfin',  label: 'Redfin',      color: '#f87171' },
+  { key: 'zillow',  label: 'Zillow',      color: '#a78bfa' }
+];
+
+// Zillow series the master view needs beyond the five the Monthly tab loads.
+const MASTER_ZILLOW_EXTRA = [
+  { key: 'median_sale_price', file: 'median_sale_price_monthly.csv' },
+  { key: 'median_list_price', file: 'median_list_price_monthly.csv' },
+  { key: 'price_cut_share',   file: 'price_cut_share.csv' }
+];
+
+// For each metric, the field (Realtor.com/Redfin) or series key (Zillow) that
+// source publishes - null where it publishes nothing comparable. `note` flags
+// the places where the three definitions do not line up exactly.
+const MASTER_METRICS = [
+  { id: 'list_price', label: 'Median List Price', unit: 'dollar',
+    realtor: 'median_listing_price', redfin: null, zillow: 'median_list_price' },
+  { id: 'sale_price', label: 'Median Sale Price', unit: 'dollar',
+    realtor: null, redfin: 'medPrice', zillow: 'median_sale_price' },
+  { id: 'active', label: 'Active Listings / Inventory', unit: 'count',
+    realtor: 'active_listing_count', redfin: 'active', zillow: 'inventory' },
+  { id: 'new_listings', label: 'New Listings', unit: 'count',
+    realtor: 'new_listing_count', redfin: 'newListings', zillow: 'new_listings' },
+  { id: 'pending', label: 'Pending', unit: 'count',
+    realtor: 'pending_listing_count', redfin: 'pendingSales', zillow: 'new_pending',
+    note: 'Realtor.com counts pending listings outstanding at month end; Redfin and Zillow count homes that went pending during the month, so their levels run lower.' },
+  { id: 'sold', label: 'Homes Sold', unit: 'count',
+    realtor: null, redfin: 'homesSold', zillow: 'sales_count' },
+  { id: 'dom', label: 'Days on Market', unit: 'days',
+    realtor: 'median_days_on_market', redfin: 'dom', zillow: 'days_to_pending',
+    note: 'Zillow measures median days to pending; Realtor.com and Redfin measure median days on market.' },
+  { id: 'price_cut', label: 'Price Cut Share', unit: 'pct',
+    realtor: 'price_reduced_share', redfin: null, zillow: 'price_cut_share' }
+];
+
+const MASTER_GEOS = [
+  { key: 'us', kind: 'national', label: 'United States' },
+  { key: 'TX', kind: 'state', label: 'Texas' },
+  { key: 'CO', kind: 'state', label: 'Colorado' },
+  { key: 'south', kind: 'region', label: 'South' },
+  { key: 'mountain', kind: 'region', label: 'Mountain' },
+  { key: 'west', kind: 'region', label: 'West' },
+  { key: 'midwest', kind: 'region', label: 'Midwest' },
+  { key: 'northeast', kind: 'region', label: 'Northeast' }
+].concat(METRO_KEYS.map(code => ({ key: code, kind: 'metro', label: TARGET_METROS[code].short })));
+
+// Which sources publish anything at a given geography.
+const MASTER_COVERAGE = {
+  national: { realtor: true, redfin: true,  zillow: true },
+  state:    { realtor: true, redfin: true,  zillow: false },
+  region:   { realtor: true, redfin: true,  zillow: false },
+  metro:    { realtor: true, redfin: false, zillow: true }
+};
+const MASTER_GAP_REASON = {
+  redfin: 'no metro-level key metrics published',
+  zillow: 'no state or region series published'
+};
+
+const MASTER_RF_SUM = ['homesSold', 'pendingSales', 'newListings', 'active'];
+const MASTER_RF_AVG = ['medPrice', 'dom'];
+
+let masterGeoKey = 'us';
+let masterRangeMonths = 24;
+let masterScale = 'abs';
+let masterLoaded = false;
+
+function masterGeo() { return MASTER_GEOS.find(g => g.key === masterGeoKey) || MASTER_GEOS[0]; }
+
+function masterGeoLabel(geo) {
+  if (geo.kind === 'metro') return TARGET_METROS[geo.key].full.toUpperCase();
+  return (GEO_MAP[geo.key] || {}).label || geo.label.toUpperCase();
+}
+
+// Shift a 'YYYY-MM' key by a number of months.
+function shiftYm(ym, months) {
+  const d = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + months, 1));
+  return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0');
+}
+
+function ymFromYyyymm(n) { const t = String(n); return t.slice(0, 4) + '-' + t.slice(4, 6); }
+
+// Each source gets normalized to a Map of 'YYYY-MM' -> value so they can share
+// one time axis despite three different date conventions.
+function masterRealtorSeries(geo, field) {
+  if (!field) return null;
+  const d = geo.kind === 'metro' ? (DATA.metros || {})[geo.key] : DATA[geo.key];
+  if (!d || !d.history || !d.history.length) return null;
+  const m = new Map();
+  d.history.forEach(r => { if (r[field] != null) m.set(ymFromYyyymm(r.date), r[field]); });
+  return m.size ? m : null;
+}
+
+function masterRedfinRows(geo) {
+  if (!rfHousingData.length) return null;
+  if (geo.kind === 'national') return aggregateRegion(rfHousingData, 'national', MASTER_RF_SUM, MASTER_RF_AVG);
+  if (geo.kind === 'region') return aggregateRegion(rfHousingData, geo.key, MASTER_RF_SUM, MASTER_RF_AVG);
+  if (geo.kind === 'state') {
+    const name = TARGET_STATES[geo.key];
+    return rfHousingData.filter(r => r.region === name).slice().sort((a, b) => a.period < b.period ? -1 : 1);
+  }
+  return null;
+}
+
+function masterRedfinSeries(rows, field) {
+  if (!field || !rows || !rows.length) return null;
+  const m = new Map();
+  rows.forEach(r => { if (r[field] != null) m.set(String(r.period).slice(0, 7), r[field]); });
+  return m.size ? m : null;
+}
+
+function masterZillowSeries(geo, key) {
+  if (!key || (geo.kind !== 'national' && geo.kind !== 'metro')) return null;
+  const rows = zillowData.monthly[key];
+  if (!rows || !rows.length) return null;
+  const m = new Map();
+  extractZillowSeries(rows, geo.kind === 'national' ? 'us' : geo.key)
+    .forEach(r => m.set(r.date.slice(0, 7), r.value));
+  return m.size ? m : null;
+}
+
+function masterSeriesFor(metric, geo, rfRows) {
+  return {
+    realtor: masterRealtorSeries(geo, metric.realtor),
+    redfin: masterRedfinSeries(rfRows, metric.redfin),
+    zillow: masterZillowSeries(geo, metric.zillow)
+  };
+}
+
+function masterAxis(bySource) {
+  const keys = new Set();
+  MASTER_SOURCES.forEach(src => { const m = bySource[src.key]; if (m) m.forEach((v, k) => keys.add(k)); });
+  const axis = Array.from(keys).sort();
+  return masterRangeMonths ? axis.slice(-masterRangeMonths) : axis;
+}
+
+// Values along the shared axis, rebased to 100 at the first reading in view when
+// the indexed scale is on - that is the only way series with different levels
+// (a $400K price next to a 50-day DOM) can be compared on one pair of axes.
+function masterValues(map, axis) {
+  const vals = axis.map(k => (map && map.has(k)) ? map.get(k) : null);
+  if (masterScale !== 'indexed') return vals;
+  const base = vals.find(v => v != null && v !== 0);
+  if (base == null) return vals;
+  return vals.map(v => v == null ? null : v / base * 100);
+}
+
+function masterLatest(map) {
+  if (!map || !map.size) return null;
+  const keys = Array.from(map.keys()).sort();
+  const ym = keys[keys.length - 1];
+  const val = map.get(ym);
+  const prev = map.get(shiftYm(ym, -1));
+  const prevYr = map.get(shiftYm(ym, -12));
+  return {
+    ym: ym,
+    val: val,
+    mom: (prev != null && prev !== 0) ? (val - prev) / prev : null,
+    yoy: (prevYr != null && prevYr !== 0) ? (val - prevYr) / prevYr : null
+  };
+}
+
+function ymLabel(ym) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months[+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4);
+}
+
+function renderMasterGeoButtons() {
+  const el = document.getElementById('master-geo-btns');
+  if (!el) return;
+  const btn = g => `<button class="geo-btn ${g.key === masterGeoKey ? 'active' : ''}" onclick="selectMasterGeo('${g.key}')">${g.label}</button>`;
+  const wide = MASTER_GEOS.filter(g => g.kind !== 'metro');
+  const metros = MASTER_GEOS.filter(g => g.kind === 'metro');
+  el.innerHTML = wide.map(btn).join('') +
+    '<span style="color:var(--border);margin:0 6px;font-size:16px;">|</span>' +
+    metros.map(btn).join('');
+}
+
+function selectMasterGeo(key) { masterGeoKey = key; renderMaster(); }
+
+function renderMasterRangeButtons() {
+  const el = document.getElementById('master-range-btns');
+  if (!el) return;
+  el.innerHTML = CHART_RANGE_OPTIONS.map(o =>
+    `<button class="range-btn ${o.months === masterRangeMonths ? 'active' : ''}" onclick="setMasterRange(${o.months})">${o.label}</button>`
+  ).join('');
+}
+
+function setMasterRange(months) { masterRangeMonths = months; renderMaster(); }
+
+function renderMasterScaleButtons() {
+  const el = document.getElementById('master-scale-btns');
+  if (!el) return;
+  const opts = [{ key: 'abs', label: 'Levels' }, { key: 'indexed', label: 'Indexed' }];
+  el.innerHTML = opts.map(o =>
+    `<button class="range-btn ${o.key === masterScale ? 'active' : ''}" onclick="setMasterScale('${o.key}')" title="${o.key === 'indexed' ? 'Rebase every line to 100 at the start of the window' : 'Plot raw values'}">${o.label}</button>`
+  ).join('');
+}
+
+function setMasterScale(scale) { masterScale = scale; renderMaster(); }
+
+function renderMasterLegend(geo) {
+  const el = document.getElementById('master-legend');
+  if (!el) return;
+  const cov = MASTER_COVERAGE[geo.kind];
+  el.innerHTML = MASTER_SOURCES.map(src => {
+    const on = cov[src.key];
+    const gap = on ? '' : ` <span style="color:var(--muted);font-weight:400;">(${MASTER_GAP_REASON[src.key]})</span>`;
+    return `<div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:${on ? 'var(--text)' : 'var(--muted)'};">
+      <span style="width:14px;height:3px;border-radius:2px;background:${on ? src.color : 'var(--border)'};display:inline-block;"></span>${src.label}${gap}</div>`;
+  }).join('');
+}
+
+function mkMasterChart(canvasId, axis, datasets, unit) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId);
+  if (!ctx || !datasets.length) return;
+  const indexed = masterScale === 'indexed';
+  charts[canvasId] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: axis,
+      datasets: datasets.map(d => ({
+        label: d.label, data: d.values, borderColor: d.color, backgroundColor: d.color + '22',
+        fill: false, tension: .3, pointRadius: 0, pointHoverRadius: 4, borderWidth: 1.6, spanGaps: true
+      }))
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1e293b', borderColor: '#334155', borderWidth: 1,
+          callbacks: {
+            label: c => c.dataset.label + ': ' + (c.parsed.y == null ? 'N/A'
+              : indexed ? c.parsed.y.toFixed(1) : fmtZillowVal(c.parsed.y, unit))
+          }
+        }
+      },
+      scales: {
+        x: { type: 'category', grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 8, maxRotation: 0, font: { size: 8 } } },
+        y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 }, callback: v => indexed ? v : zillowAxisTick(v, unit) } }
+      }
+    }
+  });
+}
+
+function renderMaster() {
+  const geo = masterGeo();
+  renderMasterGeoButtons();
+  renderMasterRangeButtons();
+  renderMasterScaleButtons();
+  renderMasterLegend(geo);
+  const labelEl = document.getElementById('master-geo-label');
+  if (labelEl) labelEl.textContent = masterGeoLabel(geo);
+
+  const rfRows = masterRedfinRows(geo);
+  const built = MASTER_METRICS.map(metric => {
+    const bySource = masterSeriesFor(metric, geo, rfRows);
+    return { metric: metric, bySource: bySource, latest: {
+      realtor: masterLatest(bySource.realtor),
+      redfin: masterLatest(bySource.redfin),
+      zillow: masterLatest(bySource.zillow)
+    } };
+  });
+
+  // Comparison table: one row per metric, latest reading and YoY per source.
+  const thead = document.getElementById('master-thead');
+  if (thead) {
+    thead.innerHTML = '<tr><th>Metric</th>' + MASTER_SOURCES.map(src =>
+      `<th style="color:${src.color}">${src.label}</th><th style="color:${src.color}">YoY</th>`
+    ).join('') + '</tr>';
+  }
+  const tbody = document.getElementById('master-tbody');
+  if (tbody) {
+    tbody.innerHTML = built.map(b => {
+      const cells = MASTER_SOURCES.map(src => {
+        const l = b.latest[src.key];
+        if (!l) return '<td style="color:var(--muted);">&mdash;</td><td class="yoy-cell neu">&mdash;</td>';
+        return `<td>${fmtZillowVal(l.val, b.metric.unit)}</td>` +
+               `<td class="yoy-cell ${yoyClass(l.yoy)}">${l.yoy == null ? '&mdash;' : fmtYoy(l.yoy)}</td>`;
+      }).join('');
+      return `<tr><td>${b.metric.label}</td>${cells}</tr>`;
+    }).join('');
+  }
+
+  // Overlay charts: one card per metric, one line per source that has data.
+  const wrap = document.getElementById('master-charts');
+  if (!wrap) return;
+  MASTER_METRICS.forEach(m => destroyChart('mo-' + m.id));
+  wrap.innerHTML = built.map(b => {
+    const active = MASTER_SOURCES.filter(src => b.bySource[src.key]);
+    const dots = active.map(src => `<span style="color:${src.color};">&#9679;</span>`).join(' ');
+    const body = active.length
+      ? `<div class="chart-wrap"><canvas id="mo-${b.metric.id}"></canvas></div>`
+      : '<div class="chart-wrap" style="display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;">No source publishes this at this geography</div>';
+    return `<div class="chart-card">
+      <div class="chart-title">${b.metric.label} ${dots}</div>
+      ${body}
+      ${b.metric.note ? `<div class="mba-note">${b.metric.note}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  built.forEach(b => {
+    const axis = masterAxis(b.bySource);
+    if (!axis.length) return;
+    const datasets = MASTER_SOURCES
+      .filter(src => b.bySource[src.key])
+      .map(src => ({ label: src.label, color: src.color, values: masterValues(b.bySource[src.key], axis) }));
+    mkMasterChart('mo-' + b.metric.id, axis, datasets, b.metric.unit);
+  });
+
+  // As-of line, because the three sources publish on different lags.
+  const asOf = MASTER_SOURCES.map(src => {
+    const stamps = built.map(b => b.latest[src.key]).filter(Boolean).map(l => l.ym).sort();
+    return stamps.length ? src.label + ': ' + ymLabel(stamps[stamps.length - 1]) : null;
+  }).filter(Boolean).join(' &middot; ');
+  const note = document.getElementById('master-note');
+  if (note) {
+    const agg = (geo.kind === 'national' || geo.kind === 'region')
+      ? ' Redfin figures at this geography are aggregated from its state file - counts are summed, medians are averaged across states.'
+      : '';
+    note.innerHTML = 'Latest data ' + (asOf || 'unavailable') + '.' + agg +
+      ' Levels are plotted as published; switch to Indexed to compare shapes when the levels differ.' +
+      ' Sources: realtor.com/research/data, redfin.com/news/data-center, zillow.com/research/data.';
+  }
+}
+
+async function initMasterTab() {
+  if (!masterLoaded) {
+    const el = document.getElementById('master-loading');
+    if (el) el.style.display = 'block';
+    await ensureZillowSeries('monthly', ZILLOW_SERIES.monthly);
+    await ensureZillowSeries('monthly', MASTER_ZILLOW_EXTRA);
+    masterLoaded = true;
+    if (el) el.style.display = 'none';
+  }
+  renderMaster();
+}
+
+// State and metro CSVs land after first paint; refresh if the user is looking.
+function refreshMasterIfActive() {
+  const page = document.getElementById('page-master');
+  if (masterLoaded && page && page.classList.contains('active')) renderMaster();
+}
+
 // ============================================================
 // Force Refresh
 // ============================================================
 async function forceRefresh() {
-  if (!confirm('This will clear cached Realtor.com data and reload fresh from the server. Uploaded Redfin/TAMU data will be preserved. Continue?')) return;
+  if (!confirm('This will clear cached Realtor.com and Zillow data and reload fresh from the server. Uploaded Redfin/TAMU data will be preserved. Continue?')) return;
   try {
+    // Everything auto-fetched: the three Realtor.com CSVs plus every Zillow
+    // series (keyed 'zillow_<cadence>_<file>'). Uploaded data is left alone.
+    const keys = await dbGetAllKeys('csv_cache');
+    const stale = keys.filter(k => ['National', 'State', 'Metro'].includes(k) || String(k).startsWith('zillow_'));
     const tx = db.transaction('csv_cache', 'readwrite');
     const store = tx.objectStore('csv_cache');
-    // Only clear auto-fetched CSV caches
-    const autoKeys = ['National', 'State', 'Metro'];
-    for (const k of autoKeys) { store.delete(k); }
+    for (const k of stale) { store.delete(k); }
     tx.oncomplete = () => { location.reload(); };
   } catch(e) {
     indexedDB.deleteDatabase(DB_NAME);
@@ -3121,6 +3608,7 @@ async function init() {
     renderOverview('us');
     clearTimeout(failsafe);
     loadEl.style.display = 'none';
+    initMasterTab();
 
     // Phase 2: Load state + metro in background
     fetchCSV('State', CSV_SOURCES.state).then(stateText => {
@@ -3128,6 +3616,7 @@ async function init() {
         const allRows = parseCSV(stateText);
         processStates(allRows);
         if (currentGeo !== 'us') renderOverview(currentGeo);
+        refreshMasterIfActive();
         updateStatus('State', 'ok', 'Ready (' + allRows.length + ' rows)');
       }
     }).catch(e => console.warn('State load error:', e));
@@ -3137,8 +3626,8 @@ async function init() {
       if (metroText) {
         const filtered = parseCSVFiltered(metroText, r => metroCodes.has(r.cbsa_code));
         processMetros(filtered);
-        renderMetroTable();
         buildMetroButtons();
+        refreshMasterIfActive();
         updateStatus('Metro', 'ok', 'Ready (' + filtered.length + ' rows)');
       }
     }).catch(e => console.warn('Metro load error:', e));

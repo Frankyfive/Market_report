@@ -47,6 +47,16 @@ jobs:
             [years_to_save.csv]="$BASE/years_to_save/Metro_years_to_save_downpayment_0.20_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
             [new_homeowner_affordability.csv]="$BASE/new_homeowner_affordability/Metro_new_homeowner_affordability_downpayment_0.20_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
             [new_renter_affordability.csv]="$BASE/new_renter_affordability/Metro_new_renter_affordability_uc_sfrcondomfr_sm_sa_month.csv"
+            [zhvi.csv]="$BASE/zhvi/Metro_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv"
+            [zori.csv]="$BASE/zori/Metro_zori_uc_sfrcondomfr_sm_month.csv"
+            [median_sale_price_monthly.csv]="$BASE/median_sale_price/Metro_median_sale_price_uc_sfrcondo_sm_month.csv"
+            [mean_sale_price_monthly.csv]="$BASE/mean_sale_price/Metro_mean_sale_price_uc_sfrcondo_sm_month.csv"
+            [median_list_price_monthly.csv]="$BASE/mlp/Metro_mlp_uc_sfrcondo_sm_month.csv"
+            [sale_to_list_ratio.csv]="$BASE/median_sale_to_list/Metro_median_sale_to_list_uc_sfrcondo_sm_month.csv"
+            [pct_sold_above_list.csv]="$BASE/pct_sold_above_list/Metro_pct_sold_above_list_uc_sfrcondo_sm_month.csv"
+            [pct_sold_below_list.csv]="$BASE/pct_sold_below_list/Metro_pct_sold_below_list_uc_sfrcondo_sm_month.csv"
+            [price_cut_share.csv]="$BASE/perc_listings_price_cut/Metro_perc_listings_price_cut_uc_sfrcondo_sm_month.csv"
+            [market_heat_index.csv]="$BASE/market_temp_index/Metro_market_temp_index_uc_sfrcondo_month.csv"
           )
 
           for NAME in "${!FILES[@]}"; do
@@ -55,6 +65,10 @@ jobs:
             curl -sL -f --retry 3 --retry-delay 2 -o "data/cache/zillow/${NAME}" "$URL"
             echo "  $NAME: $(wc -l < "data/cache/zillow/${NAME}") rows"
           done
+
+      - name: Trim CSVs to national row + target metros
+        run: |
+          python3 scripts/filter_zillow_csv.py data/cache/zillow/*.csv
 
       - name: Record timestamp
         run: |
