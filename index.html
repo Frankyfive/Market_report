@@ -142,6 +142,8 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <div class="tab" onclick="showPage('cancel',this)">Contract Cancellations</div>
   <div class="tab" onclick="showPage('txhousing',this)">Texas Housing</div>
   <div class="tab" onclick="showPage('rftracker',this)">Redfin Tracker</div>
+  <div class="tab" onclick="showPage('zillow-monthly',this)">Zillow Monthly</div>
+  <div class="tab" onclick="showPage('zillow-weekly',this)">Zillow Weekly</div>
   <div class="tab" onclick="showPage('econ',this)">Economic Indicators</div>
 </div>
 
@@ -490,6 +492,50 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   </div>
 
   <div class="mba-note">Source: Redfin Data Center | Housing Market, Buyers & Sellers, Delistings & Relistings</div>
+</div>
+
+<!-- ZILLOW MONTHLY -->
+<div class="page" id="page-zillow-monthly">
+  <div style="margin-bottom:12px;margin-top:4px;"><div class="geo-btns" id="zm-geo-btns"></div></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+    <div class="section-title" id="zm-geo-label" style="margin-bottom:0;">UNITED STATES</div>
+    <div class="range-btns" id="zm-range-btns"></div>
+  </div>
+  <div id="zm-loading" style="text-align:center;padding:40px;color:var(--muted);display:none;">
+    <div class="spinner" style="margin:0 auto 12px;"></div>
+    <div>Loading Zillow monthly data...</div>
+  </div>
+  <div class="kpi-grid" id="zm-kpi-grid"></div>
+  <div class="charts-grid">
+    <div class="chart-card"><div class="chart-title">For-Sale Inventory <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="zm-inventory"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">New Listings <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="zm-newlist"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">New Pending Listings <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="zm-pending"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Sales Count <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="zm-sales"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Median Days to Pending <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="zm-dtp"></canvas></div></div>
+  </div>
+  <div class="mba-note">Source: Zillow Research (Housing Data) | zillow.com/research/data | Monthly cadence, cached daily</div>
+</div>
+
+<!-- ZILLOW WEEKLY -->
+<div class="page" id="page-zillow-weekly">
+  <div style="margin-bottom:12px;margin-top:4px;"><div class="geo-btns" id="zw-geo-btns"></div></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+    <div class="section-title" id="zw-geo-label" style="margin-bottom:0;">UNITED STATES</div>
+    <div class="range-btns" id="zw-range-btns"></div>
+  </div>
+  <div id="zw-loading" style="text-align:center;padding:40px;color:var(--muted);display:none;">
+    <div class="spinner" style="margin:0 auto 12px;"></div>
+    <div>Loading Zillow weekly data...</div>
+  </div>
+  <div class="kpi-grid" id="zw-kpi-grid"></div>
+  <div class="charts-grid">
+    <div class="chart-card"><div class="chart-title">For-Sale Inventory <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="zw-inventory"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">New Listings <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="zw-newlist"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">New Pending Listings <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="zw-pending"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Sales Count <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="zw-sales"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Median Days to Pending <span class="chart-hint">&middot; click a point for details</span></div><div class="chart-wrap"><canvas id="zw-dtp"></canvas></div></div>
+  </div>
+  <div class="mba-note">Source: Zillow Research (Housing Data) | zillow.com/research/data | Weekly cadence, cached daily</div>
 </div>
 
 <!-- ECONOMIC INDICATORS (FRED) -->
@@ -1435,6 +1481,8 @@ function showPage(name, el) {
   if (name === 'cancel') setTimeout(() => renderCancellations(), 50);
   if (name === 'txhousing') setTimeout(() => renderTamu(), 50);
   if (name === 'rftracker') setTimeout(() => renderRfTracker(), 50);
+  if (name === 'zillow-monthly') setTimeout(() => initZillowTab('monthly'), 50);
+  if (name === 'zillow-weekly') setTimeout(() => initZillowTab('weekly'), 50);
   if (name === 'econ') setTimeout(() => loadAndRenderEcon(), 50);
 }
 
@@ -2753,6 +2801,241 @@ function renderEcon() {
       attachEconChartDetail(s.chart, sliced, s.label, s.unit, s.color);
     }
   });
+}
+
+// ============================================================
+// ZILLOW MONTHLY / WEEKLY
+// ============================================================
+const ZILLOW_CACHE_BASE = 'https://frankyfive.github.io/Market_report/data/cache/zillow';
+
+// Zillow's RegionName/StateName for each of our tracked metros (same keys as TARGET_METROS)
+const ZILLOW_REGION_MAP = {
+  19100: { name: 'Dallas, TX', state: 'TX' },
+  26420: { name: 'Houston, TX', state: 'TX' },
+  19740: { name: 'Denver, CO', state: 'CO' },
+  41700: { name: 'San Antonio, TX', state: 'TX' },
+  12420: { name: 'Austin, TX', state: 'TX' },
+  21340: { name: 'El Paso, TX', state: 'TX' },
+  17820: { name: 'Colorado Springs, CO', state: 'CO' },
+  32580: { name: 'McAllen, TX', state: 'TX' }
+};
+const ZILLOW_GEO_KEYS = ['us', ...METRO_KEYS];
+
+const ZILLOW_SERIES = {
+  monthly: [
+    { key: 'inventory', file: 'inventory_monthly.csv', label: 'For-Sale Inventory', unit: 'count', chart: 'zm-inventory', color: '#38bdf8' },
+    { key: 'new_listings', file: 'new_listings_monthly.csv', label: 'New Listings', unit: 'count', chart: 'zm-newlist', color: '#34d399' },
+    { key: 'new_pending', file: 'new_pending_monthly.csv', label: 'New Pending Listings', unit: 'count', chart: 'zm-pending', color: '#a78bfa' },
+    { key: 'sales_count', file: 'sales_count_monthly.csv', label: 'Sales Count', unit: 'count', chart: 'zm-sales', color: '#f97316' },
+    { key: 'days_to_pending', file: 'days_to_pending_monthly.csv', label: 'Median Days to Pending', unit: 'days', chart: 'zm-dtp', color: '#facc15' }
+  ],
+  weekly: [
+    { key: 'inventory', file: 'inventory_weekly.csv', label: 'For-Sale Inventory', unit: 'count', chart: 'zw-inventory', color: '#38bdf8' },
+    { key: 'new_listings', file: 'new_listings_weekly.csv', label: 'New Listings', unit: 'count', chart: 'zw-newlist', color: '#34d399' },
+    { key: 'new_pending', file: 'new_pending_weekly.csv', label: 'New Pending Listings', unit: 'count', chart: 'zw-pending', color: '#a78bfa' },
+    { key: 'sales_count', file: 'sales_count_weekly.csv', label: 'Sales Count', unit: 'count', chart: 'zw-sales', color: '#f97316' },
+    { key: 'days_to_pending', file: 'days_to_pending_weekly.csv', label: 'Median Days to Pending', unit: 'days', chart: 'zw-dtp', color: '#facc15' }
+  ]
+};
+
+let zillowData = { monthly: {}, weekly: {} }; // zillowData[cadence][seriesKey] = raw parsed CSV rows
+let zillowLoaded = { monthly: false, weekly: false };
+let currentZillowGeo = { monthly: 'us', weekly: 'us' };
+let zillowRangeMonths = { monthly: null, weekly: null };
+
+async function fetchZillowCsv(cadence, file) {
+  const cacheKey = 'zillow_' + cadence + '_' + file;
+  try {
+    const cached = await dbGet('csv_cache', cacheKey);
+    if (cached && (Date.now() - cached.ts) < 86400000) return cached.data;
+  } catch(e) {}
+  try {
+    const url = `${ZILLOW_CACHE_BASE}/${file}`;
+    const resp = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const text = await resp.text();
+    const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+    await dbPut('csv_cache', cacheKey, { data: parsed.data, ts: Date.now() });
+    return parsed.data;
+  } catch(e) {
+    console.warn('Zillow fetch failed:', file, e.message);
+    try { const c = await dbGet('csv_cache', cacheKey); if (c?.data) return c.data; } catch(e2) {}
+    return [];
+  }
+}
+
+function zillowRowMatches(row, geoKey) {
+  if (geoKey === 'us') return row.RegionType === 'country';
+  const meta = ZILLOW_REGION_MAP[geoKey];
+  return !!meta && row.RegionName === meta.name && row.StateName === meta.state;
+}
+
+function extractZillowSeries(rows, geoKey) {
+  if (!rows || !rows.length) return [];
+  const row = rows.find(r => zillowRowMatches(r, geoKey));
+  if (!row) return [];
+  const dateCols = Object.keys(row).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+  return dateCols
+    .map(d => ({ date: d, value: (row[d] === '' || row[d] == null) ? null : parseFloat(row[d]) }))
+    .filter(r => r.value != null && !isNaN(r.value));
+}
+
+async function loadZillowCadence(cadence) {
+  if (zillowLoaded[cadence]) return;
+  const loadEl = document.getElementById(cadence === 'monthly' ? 'zm-loading' : 'zw-loading');
+  if (loadEl) loadEl.style.display = 'block';
+  for (const s of ZILLOW_SERIES[cadence]) {
+    zillowData[cadence][s.key] = await fetchZillowCsv(cadence, s.file);
+  }
+  zillowLoaded[cadence] = true;
+  if (loadEl) loadEl.style.display = 'none';
+}
+
+async function initZillowTab(cadence) {
+  await loadZillowCadence(cadence);
+  renderZillowTab(cadence);
+}
+
+function renderZillowGeoButtons(cadence) {
+  const el = document.getElementById(cadence === 'monthly' ? 'zm-geo-btns' : 'zw-geo-btns');
+  if (!el) return;
+  el.innerHTML = ZILLOW_GEO_KEYS.map(g => {
+    const active = g === currentZillowGeo[cadence];
+    const color = g === 'us' ? '#38bdf8' : METRO_COLORS[METRO_KEYS.indexOf(g)];
+    const label = g === 'us' ? 'US' : TARGET_METROS[g].short;
+    const style = active ? `background:${color};color:#0f172a;border-color:${color}` : '';
+    return `<button class="geo-btn ${active ? 'active' : ''}" style="${style}" onclick="selectZillowGeo('${cadence}','${g}',this)">${label}</button>`;
+  }).join('');
+}
+
+function selectZillowGeo(cadence, geo, btn) {
+  currentZillowGeo[cadence] = geo;
+  const containerId = cadence === 'monthly' ? 'zm-geo-btns' : 'zw-geo-btns';
+  document.querySelectorAll('#' + containerId + ' .geo-btn').forEach(b => { b.classList.remove('active'); b.style.background = ''; b.style.color = ''; b.style.borderColor = ''; });
+  const color = geo === 'us' ? '#38bdf8' : METRO_COLORS[METRO_KEYS.indexOf(geo)];
+  btn.classList.add('active'); btn.style.background = color; btn.style.color = '#0f172a'; btn.style.borderColor = color;
+  renderZillowTab(cadence);
+}
+
+function renderZillowRangeButtons(cadence) {
+  const el = document.getElementById(cadence === 'monthly' ? 'zm-range-btns' : 'zw-range-btns');
+  if (!el) return;
+  el.innerHTML = CHART_RANGE_OPTIONS.map(o =>
+    `<button class="range-btn ${o.months === zillowRangeMonths[cadence] ? 'active' : ''}" onclick="setZillowRange('${cadence}',${o.months})">${o.label}</button>`
+  ).join('');
+}
+
+function setZillowRange(cadence, months) {
+  zillowRangeMonths[cadence] = months;
+  renderZillowRangeButtons(cadence);
+  renderZillowTab(cadence);
+}
+
+function zillowSlice(cadence, data) {
+  const months = zillowRangeMonths[cadence];
+  if (!months || !data) return data;
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - months);
+  return data.filter(d => new Date(d.date + 'T00:00:00') >= cutoff);
+}
+
+function fmtZillowVal(v, unit) {
+  if (v == null) return 'N/A';
+  if (unit === 'days') return Math.round(v) + ' days';
+  return Math.round(v).toLocaleString();
+}
+
+function zillowKpiCard(s, series, periodLabel, periodsPerYear) {
+  if (!series.length) {
+    return `<div class="kpi-card" style="--accent:${s.color}"><div class="kpi-label">${s.label}</div><div class="kpi-value" style="font-size:13px;color:var(--muted);">No data</div></div>`;
+  }
+  const n = series.length;
+  const latest = series[n - 1];
+  const prev = n > 1 ? series[n - 2] : null;
+  const yoyRow = n > periodsPerYear ? series[n - 1 - periodsPerYear] : null;
+  const mom = prev && prev.value ? (latest.value - prev.value) / prev.value : null;
+  const yoy = yoyRow && yoyRow.value ? (latest.value - yoyRow.value) / yoyRow.value : null;
+  return `<div class="kpi-card" style="--accent:${s.color}">
+    <div class="kpi-label">${s.label}</div>
+    <div class="kpi-value" style="font-size:18px;">${fmtZillowVal(latest.value, s.unit)}</div>
+    <div class="kpi-changes">
+      <div class="kpi-row"><span class="kpi-row-lbl">${periodLabel}</span><span class="${yoyClass(mom)}">${mom == null ? 'N/A' : fmtYoy(mom)}</span></div>
+      <div class="kpi-row"><span class="kpi-row-lbl">YoY</span><span class="${yoyClass(yoy)}">${yoy == null ? 'N/A' : fmtYoy(yoy)}</span></div>
+      <div class="kpi-row"><span class="kpi-row-lbl" style="min-width:auto;">${latest.date}</span></div>
+    </div>
+  </div>`;
+}
+
+function mkZillowChart(canvasId, data, color, unit) {
+  destroyChart(canvasId);
+  if (!data || !data.length) return;
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  const labels = data.map(d => d.date);
+  const values = data.map(d => d.value);
+  charts[canvasId] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{
+      data: values, borderColor: color, backgroundColor: color + '22',
+      fill: true, tension: .3, pointRadius: 0, pointHoverRadius: 4, borderWidth: 1.5
+    }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b', borderColor: '#334155', borderWidth: 1 } },
+      scales: {
+        x: { type: 'category', grid: { color: '#1e293b' }, ticks: { maxTicksLimit: 8, maxRotation: 0, font: { size: 8 },
+          callback: function(val, i) { const d = this.getLabelForValue(i); return d ? d.substring(0, 7) : ''; }
+        }},
+        y: { grid: { color: '#1e3a5f' }, ticks: { font: { size: 9 },
+          callback: v => unit === 'days' ? Math.round(v) + 'd' : (v >= 1000 ? (v / 1000).toFixed(0) + 'K' : v)
+        }}
+      }
+    }
+  });
+}
+
+function attachZillowChartDetail(chartId, data, label, unit, color, periodLabel, periodsPerYear) {
+  makeChartClickable(chartId, color, (index) => {
+    const r = data[index];
+    if (!r) return null;
+    const prev = data[index - 1];
+    const yoyRow = index - periodsPerYear >= 0 ? data[index - periodsPerYear] : null;
+    const mom = prev && prev.value ? (r.value - prev.value) / prev.value : null;
+    const yoy = yoyRow && yoyRow.value ? (r.value - yoyRow.value) / yoyRow.value : null;
+    const dateObj = new Date(r.date + 'T00:00:00');
+    return {
+      dateLabel: label + ' — ' + dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      valLabel: fmtZillowVal(r.value, unit),
+      changes: [
+        { label: periodLabel, text: mom == null ? 'N/A' : fmtYoy(mom), cls: mom == null ? 'neu' : yoyClass(mom) },
+        { label: 'YoY', text: yoy == null ? 'N/A' : fmtYoy(yoy), cls: yoy == null ? 'neu' : yoyClass(yoy) }
+      ]
+    };
+  });
+}
+
+function renderZillowTab(cadence) {
+  renderZillowGeoButtons(cadence);
+  renderZillowRangeButtons(cadence);
+  const geo = currentZillowGeo[cadence];
+  const periodLabel = cadence === 'weekly' ? 'WoW' : 'MoM';
+  const periodsPerYear = cadence === 'weekly' ? 52 : 12;
+  const labelEl = document.getElementById(cadence === 'monthly' ? 'zm-geo-label' : 'zw-geo-label');
+  if (labelEl) labelEl.textContent = geo === 'us' ? 'UNITED STATES' : TARGET_METROS[geo].full.toUpperCase();
+
+  let kpiHtml = '';
+  ZILLOW_SERIES[cadence].forEach(s => {
+    const rows = zillowData[cadence][s.key] || [];
+    const series = extractZillowSeries(rows, geo);
+    const sliced = zillowSlice(cadence, series);
+    kpiHtml += zillowKpiCard(s, series, periodLabel, periodsPerYear);
+    const color = geo === 'us' ? s.color : (METRO_COLORS[METRO_KEYS.indexOf(geo)] || s.color);
+    mkZillowChart(s.chart, sliced, color, s.unit);
+    if (sliced.length) attachZillowChartDetail(s.chart, sliced, s.label, s.unit, color, periodLabel, periodsPerYear);
+  });
+  const kpiEl = document.getElementById(cadence === 'monthly' ? 'zm-kpi-grid' : 'zw-kpi-grid');
+  if (kpiEl) kpiEl.innerHTML = kpiHtml;
 }
 
 // ============================================================
