@@ -1,0 +1,53 @@
+name: Cache Redfin Data
+
+# Redfin's Data Center download buttons pull from a public S3 bucket, so the
+# manual download-and-upload loop can run unattended. The dashboard's upload
+# button still works and merges with whatever this produces.
+
+on:
+  schedule:
+    # Redfin publishes monthly data in the first week of the month; run weekly
+    # so a late publish is picked up within days.
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cache-redfin:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download Redfin Data Center CSVs
+        run: |
+          set -e
+          S3="https://redfin-public-data.s3.us-west-2.amazonaws.com/redfin_data_center"
+          mkdir -p redfin_src
+          PATHS="
+            housing_market/monthly/all_states.csv
+            buyers_and_sellers/monthly/all_census_regions.csv
+            delistings_relistings/monthly/all_states.csv
+            contract_cancellations/monthly/all_metros.csv
+          "
+          for P in $PATHS; do
+            NAME=$(echo "$P" | tr '/' '_')
+            echo "Fetching $P..."
+            curl -sL -f --retry 3 --retry-delay 5 --max-time 300 -o "redfin_src/${NAME}" "$S3/$P"
+            echo "  $NAME: $(wc -l < "redfin_src/${NAME}") lines"
+          done
+
+      - name: Build dashboard JSON
+        run: python3 scripts/build_redfin_json.py --src redfin_src --out data/manual
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/manual/rf_tracker.json data/manual/redfin_cancel.json
+          git diff --staged --quiet || git commit -m "Cache Redfin data - $(date -u +%Y-%m-%d)"
+          git push

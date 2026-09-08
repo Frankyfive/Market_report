@@ -288,7 +288,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
       <div>
         <div style="color:var(--text);font-size:13px;font-weight:600;">Upload Redfin Cancellations CSV</div>
-        <div style="color:var(--muted);font-size:9px;margin-top:3px;">Download from Redfin Data Center (All Metros, Monthly). Upload once with full history, then update monthly. Data is cached in your browser.</div>
+        <div style="color:var(--muted);font-size:9px;margin-top:3px;">Updates automatically every Monday from Redfin&#39;s Data Center. Upload a CSV only to pull in a new release early or add history beyond the cached window.</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <label class="btn-add" style="cursor:pointer;">
@@ -323,14 +323,16 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <!-- Top 25 / Bottom 25 -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
     <div class="mba-card" style="margin-bottom:0;">
-      <div style="color:var(--red);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Top 25 - Highest Cancellation Rate</div>
+      <div style="color:var(--red);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Top 25 - Highest Cancellation Rate</div>
+      <div class="cancel-min-note" style="color:var(--muted);font-size:9px;font-style:italic;margin-bottom:10px;"></div>
       <table class="mba-table">
         <thead><tr><th style="text-align:left;">Rank</th><th style="text-align:left;">Metro</th><th>% Pending</th><th>Cancellations</th></tr></thead>
         <tbody id="cancel-top15"></tbody>
       </table>
     </div>
     <div class="mba-card" style="margin-bottom:0;">
-      <div style="color:var(--green);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Bottom 25 - Lowest Cancellation Rate</div>
+      <div style="color:var(--green);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Bottom 25 - Lowest Cancellation Rate</div>
+      <div class="cancel-min-note" style="color:var(--muted);font-size:9px;font-style:italic;margin-bottom:10px;"></div>
       <table class="mba-table">
         <thead><tr><th style="text-align:left;">Rank</th><th style="text-align:left;">Metro</th><th>% Pending</th><th>Cancellations</th></tr></thead>
         <tbody id="cancel-bot15"></tbody>
@@ -344,7 +346,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div class="chart-wrap" style="height:500px;"><canvas id="cancel-line-pct"></canvas></div>
   </div>
 
-  <div class="mba-note">Source: Redfin Data Center - Contract Cancellations | Upload updated CSV monthly</div>
+  <div class="mba-note">Source: Redfin Data Center - Contract Cancellations | Auto-updating weekly</div>
 </div>
 
 <!-- TEXAS HOUSING (TAMU) -->
@@ -428,6 +430,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
       <div style="flex:1;min-width:200px;">
         <div style="color:var(--text);font-size:11px;font-weight:600;margin-bottom:4px;">Upload Redfin CSVs</div>
+        <div style="color:var(--muted);font-size:9px;margin-bottom:4px;">Auto-updates weekly; upload only to pull a release in early.</div>
         <div style="color:var(--muted);font-size:9px;">Housing Market (redfin_housing), Buyers/Sellers (redfin_buyers), Delistings (redfin_delist). Select multiple files at once.</div>
       </div>
       <label class="btn-add" style="cursor:pointer;">Choose CSV(s)<input type="file" accept=".csv" multiple id="rf-upload" onchange="handleRfUpload(event)" style="display:none;"/></label>
@@ -662,7 +665,7 @@ const CSV_SOURCES = {
   }
 };
 
-const TARGET_STATES = { TX: 'Texas', CO: 'Colorado' };
+const TARGET_STATES = { TX: 'Texas', CO: 'Colorado', FL: 'Florida' };
 const REGIONS = {
   south: { label: 'SOUTH', accent: '#f87171', states: ['TX','FL','GA','NC','SC','VA','TN','AL','MS','LA','AR','KY','WV','OK','MD','DC','DE'] },
   mountain: { label: 'MOUNTAIN', accent: '#a78bfa', states: ['CO','UT','AZ','NV','NM','ID','MT','WY'] },
@@ -678,7 +681,7 @@ const TARGET_METROS = {
   12420: { short: 'Austin', full: 'Austin-Round Rock-San Marcos, TX' },
   21340: { short: 'El Paso', full: 'El Paso, TX' },
   17820: { short: 'Colo. Springs', full: 'Colorado Springs, CO' },
-  32580: { short: 'McAllen', full: 'McAllen-Edinburg-Mission, TX' }
+  45300: { short: 'Tampa', full: 'Tampa-St. Petersburg-Clearwater, FL' }
 };
 
 const METRO_KEYS = Object.keys(TARGET_METROS);
@@ -688,6 +691,7 @@ const GEO_MAP = {
   us: { label: 'UNITED STATES', accent: '#38bdf8' },
   TX: { label: 'TEXAS', accent: '#f97316' },
   CO: { label: 'COLORADO', accent: '#a78bfa' },
+  FL: { label: 'FLORIDA', accent: '#34d399' },
   south: { label: 'SOUTH REGION', accent: '#f87171' },
   mountain: { label: 'MOUNTAIN REGION', accent: '#a78bfa' },
   west: { label: 'WEST REGION', accent: '#34d399' },
@@ -841,9 +845,14 @@ async function fetchCSV(key, source) {
   return null;
 }
 
+// Papa Parse guesses the newline from the first line it sees, so a file that
+// mixes CRLF and LF collapses into a single unusable row. Normalizing up front
+// is cheaper than debugging that silently.
+function normalizeEol(text) { return text ? text.replace(/\r\n/g, '\n').replace(/\r/g, '\n') : text; }
+
 function parseCSV(text) {
   if (!text) return [];
-  const result = Papa.parse(text.trim(), { header: true, skipEmptyLines: true, dynamicTyping: true });
+  const result = Papa.parse(normalizeEol(text).trim(), { header: true, skipEmptyLines: true, dynamicTyping: true });
   return result.data;
 }
 
@@ -852,7 +861,7 @@ function parseCSV(text) {
 function parseCSVFiltered(text, filterFn) {
   if (!text) return [];
   const kept = [];
-  Papa.parse(text.trim(), {
+  Papa.parse(normalizeEol(text).trim(), {
     header: true,
     skipEmptyLines: true,
     dynamicTyping: true,
@@ -1214,7 +1223,8 @@ let currentGeo = 'us';
 
 function renderGeoButtons() {
   const geos = [
-    { key: 'us', label: 'United States' }, { key: 'TX', label: 'Texas' }, { key: 'CO', label: 'Colorado' }
+    { key: 'us', label: 'United States' }, { key: 'TX', label: 'Texas' },
+    { key: 'CO', label: 'Colorado' }, { key: 'FL', label: 'Florida' }
   ];
   const regions = [
     { key: 'south', label: 'South' }, { key: 'mountain', label: 'Mountain' },
@@ -1495,9 +1505,13 @@ const CANCEL_METRO_MAP = {
   'San Antonio, TX metro area': { short: 'San Antonio', color: '#34d399' },
   'Austin, TX metro area': { short: 'Austin', color: '#f97316' },
   'El Paso, TX metro area': { short: 'El Paso', color: '#facc15' },
-  'Colorado Springs, CO metro area': { short: 'Colo. Springs', color: '#e879f9' }
+  'Colorado Springs, CO metro area': { short: 'Colo. Springs', color: '#e879f9' },
+  'Tampa, FL metro area': { short: 'Tampa', color: '#fb923c' }
 };
 const CANCEL_METRO_NAMES = Object.keys(CANCEL_METRO_MAP);
+
+// Minimum cancellations for a metro to enter the rankings.
+const CANCEL_MIN_COUNT = 100;
 
 let cancelData = []; // all rows from uploaded CSV(s)
 
@@ -1579,8 +1593,12 @@ function renderCancellations() {
   // Our metros from latest period
   const ourRows = latestRows.filter(r => CANCEL_METRO_NAMES.includes(r.region));
 
-  // Rank all metros by % pending (cancellation rate)
-  const ranked = latestRows.filter(r => r.pctPending != null).sort((a, b) => b.pctPending - a.pctPending);
+  // Rank by cancellation rate, but only among metros with enough closings for
+  // the rate to mean anything - a metro with 2 cancellations can post a 90%
+  // rate and swamp the leaderboard.
+  const ranked = latestRows
+    .filter(r => r.pctPending != null && (r.cancellations || 0) >= CANCEL_MIN_COUNT)
+    .sort((a, b) => b.pctPending - a.pctPending);
   const rankMap = {};
   ranked.forEach((r, i) => rankMap[r.region] = i + 1);
   const totalMetros = ranked.length;
@@ -1626,6 +1644,9 @@ function renderCancellations() {
   // Top 25 / Bottom 25
   const top15 = ranked.slice(0, 25);
   const bot15 = ranked.slice(-25).reverse();
+  document.querySelectorAll('.cancel-min-note').forEach(el => {
+    el.textContent = `Metros with at least ${CANCEL_MIN_COUNT} cancellations (${totalMetros} of ${latestRows.length} qualify)`;
+  });
 
   document.getElementById('cancel-top15').innerHTML = top15.map((r, i) => {
     const isOurs = CANCEL_METRO_NAMES.includes(r.region);
@@ -2815,7 +2836,7 @@ const ZILLOW_REGION_MAP = {
   12420: { name: 'Austin, TX', state: 'TX' },
   21340: { name: 'El Paso, TX', state: 'TX' },
   17820: { name: 'Colorado Springs, CO', state: 'CO' },
-  32580: { name: 'McAllen, TX', state: 'TX' }
+  45300: { name: 'Tampa, FL', state: 'FL' }
 };
 const ZILLOW_GEO_KEYS = ['us', ...METRO_KEYS];
 
@@ -2917,7 +2938,7 @@ async function fetchZillowCsv(cadence, file) {
     const resp = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const text = await resp.text();
-    const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+    const parsed = Papa.parse(normalizeEol(text), { header: true, skipEmptyLines: true });
     await dbPut('csv_cache', cacheKey, { data: parsed.data, ts: Date.now() });
     return parsed.data;
   } catch(e) {
@@ -3183,7 +3204,6 @@ const MASTER_SOURCES = [
 
 // Zillow series the master view needs beyond the five the Monthly tab loads.
 const MASTER_ZILLOW_EXTRA = [
-  { key: 'median_sale_price', file: 'median_sale_price_monthly.csv' },
   { key: 'median_list_price', file: 'median_list_price_monthly.csv' },
   { key: 'price_cut_share',   file: 'price_cut_share.csv' }
 ];
@@ -3193,9 +3213,8 @@ const MASTER_ZILLOW_EXTRA = [
 // the places where the three definitions do not line up exactly.
 const MASTER_METRICS = [
   { id: 'list_price', label: 'Median List Price', unit: 'dollar',
-    realtor: 'median_listing_price', redfin: null, zillow: 'median_list_price' },
-  { id: 'sale_price', label: 'Median Sale Price', unit: 'dollar',
-    realtor: null, redfin: 'medPrice', zillow: 'median_sale_price' },
+    realtor: 'median_listing_price', redfin: 'medPrice', zillow: 'median_list_price',
+    note: 'Realtor.com and Zillow report median list price; the Redfin line is its median sale price, which is what Redfin publishes at this geography.' },
   { id: 'active', label: 'Active Listings / Inventory', unit: 'count',
     realtor: 'active_listing_count', redfin: 'active', zillow: 'inventory' },
   { id: 'new_listings', label: 'New Listings', unit: 'count',
@@ -3216,6 +3235,7 @@ const MASTER_GEOS = [
   { key: 'us', kind: 'national', label: 'United States' },
   { key: 'TX', kind: 'state', label: 'Texas' },
   { key: 'CO', kind: 'state', label: 'Colorado' },
+  { key: 'FL', kind: 'state', label: 'Florida' },
   { key: 'south', kind: 'region', label: 'South' },
   { key: 'mountain', kind: 'region', label: 'Mountain' },
   { key: 'west', kind: 'region', label: 'West' },

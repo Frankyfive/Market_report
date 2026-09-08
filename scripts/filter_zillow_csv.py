@@ -17,7 +17,7 @@ TARGET_METROS = {
     ('Austin, TX', 'TX'),
     ('El Paso, TX', 'TX'),
     ('Colorado Springs, CO', 'CO'),
-    ('McAllen, TX', 'TX'),
+    ('Tampa, FL', 'FL'),
 }
 
 
