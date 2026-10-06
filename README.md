@@ -8,7 +8,7 @@ Data pulled from public websites for housing.
 | [Zillow Research](https://www.zillow.com/research/data/) | Inventory, sales, values, rents, affordability | Automated, Mondays 07:00 UTC |
 | [Redfin Data Center](https://www.redfin.com/news/data-center/downloads/) | Housing market, buyers/sellers, delistings, cancellations | Automated, Mondays 08:00 UTC |
 | [FRED](https://fred.stlouisfed.org/) | Economic indicators | Automated with Realtor.com |
-| [Texas A&M TRERC](https://trerc.tamu.edu/) | Texas housing | Manual CSV upload |
+| [Texas A&M TRERC](https://trerc.tamu.edu/) | Texas + 5 metro housing activity | Automated, Tuesdays 09:00 UTC |
 | MBA Purchase Index | Weekly applications | Manual entry / Google Sheet sync |
 
 ## How the automation works
@@ -25,8 +25,21 @@ under `data/`. The page then reads those cached files instead of hitting the sou
 - **Zillow** ([cache-zillow.yml](.github/workflows/cache-zillow.yml)) downloads the metro-level
   research CSVs, then [scripts/filter_zillow_csv.py](scripts/filter_zillow_csv.py) trims each to
   the national row plus the eight target metros (~21 MB down to ~800 KB).
+- **Texas A&M** ([cache-tamu.yml](.github/workflows/cache-tamu.yml)) runs
+  [scripts/fetch_tamu.py](scripts/fetch_tamu.py), which calls the JSON endpoint behind the
+  trerc.tamu.edu housing-activity table for Texas and the five metros and merges the result
+  into `data/manual/tamu_housing.json`. TRERC revises recent months, so fetched rows replace
+  existing ones. The endpoint is undocumented, so if TRERC changes their site this workflow
+  will fail and the CSV upload on the Texas Housing tab is the fallback.
 - **Realtor.com** ([cache-csvs.yml](.github/workflows/cache-csvs.yml)) caches the country and
   state histories in full and filters the metro history to the target CBSA codes.
 
 Changing the tracked metros means updating the CBSA list in `cache-csvs.yml`, `TARGET_METROS`
 and `ZILLOW_REGION_MAP` in `index.html`, and `TARGET_METROS` in `filter_zillow_csv.py`.
+
+## Update log
+
+Every workflow that commits new data also runs [scripts/update_log.py](scripts/update_log.py),
+which stamps that source in `data/update_log.json` and recomputes each source's latest data
+period. The **Update Log** tab renders it. Run `python scripts/update_log.py --seed` to rebuild
+the timestamps from git history.

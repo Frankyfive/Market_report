@@ -1,0 +1,39 @@
+name: Cache Texas A&M Housing Data
+
+# Pulls monthly housing activity for Texas and the five tracked metros from the
+# same endpoint the trerc.tamu.edu housing-activity page uses for its table and
+# CSV download, so the manual CSV upload is no longer needed.
+
+on:
+  schedule:
+    # TRERC posts a month's MLS data around the middle of the following month
+    # and revises recent months; weekly runs pick up both within days.
+    - cron: '0 9 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cache-tamu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch TRERC housing activity
+        run: python3 scripts/fetch_tamu.py --out data/manual/tamu_housing.json
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/manual/tamu_housing.json
+          if ! git diff --staged --quiet; then
+            python3 scripts/update_log.py tamu
+            git add data/update_log.json
+            git commit -m "Cache Texas A&M housing data - $(date -u +%Y-%m-%d)"
+          fi
+          git push

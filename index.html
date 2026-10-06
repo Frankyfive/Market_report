@@ -146,6 +146,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <div class="tab" onclick="showPage('zillow-weekly',this)">Zillow Weekly</div>
   <div class="tab" onclick="showPage('zillow-deep',this)">Zillow Deep Dive</div>
   <div class="tab" onclick="showPage('econ',this)">Economic Indicators</div>
+  <div class="tab" onclick="showPage('updatelog',this)">Update Log</div>
 </div>
 
 <!-- MASTER OVERVIEW - Realtor.com vs Redfin vs Zillow -->
@@ -358,7 +359,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
       <div>
         <div style="color:var(--text);font-size:13px;font-weight:600;">Upload TAMU Housing CSV(s)</div>
-        <div style="color:var(--muted);font-size:9px;margin-top:3px;">Upload individual market CSVs from trerc.tamu.edu (Texas, DFW, Houston, etc). Files merge automatically. Data is cached in your browser.</div>
+        <div style="color:var(--muted);font-size:9px;margin-top:3px;">Refreshed automatically every Tuesday from trerc.tamu.edu (Texas, Austin, DFW, El Paso, Houston, San Antonio). Upload CSVs only to add other markets; uploads are cached in your browser.</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <label class="btn-add" style="cursor:pointer;">
@@ -419,6 +420,18 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   </div>
 
   <div class="mba-note">Source: Texas Real Estate Research Center at Texas A&M University | trerc.tamu.edu</div>
+</div>
+
+<!-- UPDATE LOG -->
+<div class="page" id="page-updatelog">
+  <div class="section-title">Data Source Update Log</div>
+  <div style="overflow-x:auto;">
+    <table class="metro-table" id="updatelog-table">
+      <thead><tr><th>Source</th><th>Data</th><th>Last Updated</th><th>Data Through</th><th>Refresh</th><th>Status</th></tr></thead>
+      <tbody id="updatelog-tbody"><tr><td colspan="6" style="text-align:center;color:var(--muted);">Loading...</td></tr></tbody>
+    </table>
+  </div>
+  <div class="mba-note">Last Updated is when new data for the source was last committed to the repo. Status compares that against how often the source publishes.</div>
 </div>
 
 <!-- REDFIN TRACKER -->
@@ -1492,6 +1505,60 @@ function showPage(name, el) {
   if (name === 'zillow-deep') setTimeout(() => initZillowTab('deep'), 50);
   if (name === 'master') setTimeout(() => initMasterTab(), 50);
   if (name === 'econ') setTimeout(() => loadAndRenderEcon(), 50);
+  if (name === 'updatelog') renderUpdateLog();
+}
+
+// ============================================================
+// UPDATE LOG - when each source last refreshed (data/update_log.json,
+// written by scripts/update_log.py from each GitHub Actions workflow)
+// ============================================================
+// maxAgeDays: how old "Last Updated" can get before the source looks overdue.
+const UPDATE_LOG_SOURCES = [
+  { key: 'realtor', name: 'Realtor.com', data: 'Inventory, list prices, days on market', refresh: 'Weekly (Mon)', maxAgeDays: 8 },
+  { key: 'zillow', name: 'Zillow Research', data: 'Sales, inventory, values, rents, affordability', refresh: 'Weekly (Mon)', maxAgeDays: 8 },
+  { key: 'redfin', name: 'Redfin Data Center', data: 'Housing market, buyers/sellers, delistings, cancellations', refresh: 'Monthly (checked Mon)', maxAgeDays: 38 },
+  { key: 'fred', name: 'FRED', data: 'Economic indicators, mortgage rate', refresh: 'Weekly (Mon)', maxAgeDays: 8 },
+  { key: 'mba', name: 'MBA Purchase Index', data: 'Weekly purchase applications', refresh: 'Weekly (Wed)', maxAgeDays: 8 },
+  { key: 'tamu', name: 'Texas A&M TRERC', data: 'Texas + Austin, DFW, El Paso, Houston, San Antonio', refresh: 'Monthly (checked Tue)', maxAgeDays: 38 }
+];
+let updateLog = null;
+
+async function renderUpdateLog() {
+  const tbody = document.getElementById('updatelog-tbody');
+  if (!updateLog) {
+    try {
+      const resp = await fetch(REPO_BASE.replace('/cache', '') + '/update_log.json', { cache: 'no-store', signal: AbortSignal.timeout(8000) });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      updateLog = (await resp.json()).sources || {};
+    } catch (e) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--red);">Could not load update log (${e.message})</td></tr>`;
+      return;
+    }
+  }
+  const now = Date.now();
+  tbody.innerHTML = UPDATE_LOG_SOURCES.map(src => {
+    const entry = updateLog[src.key] || {};
+    const updated = entry.updated ? new Date(entry.updated) : null;
+    const ageDays = updated ? Math.floor((now - updated) / 86400000) : null;
+    let status = 'No record', color = 'var(--muted)';
+    if (ageDays != null) {
+      if (ageDays <= src.maxAgeDays) { status = 'Current'; color = 'var(--green)'; }
+      else if (ageDays <= src.maxAgeDays * 2) { status = 'Due'; color = 'var(--yellow)'; }
+      else { status = 'Stale'; color = 'var(--red)'; }
+    }
+    const updatedText = updated
+      ? updated.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) +
+        ` <span style="color:var(--muted);">(${ageDays === 0 ? 'today' : ageDays + 'd ago'})</span>`
+      : '-';
+    return `<tr>
+      <td>${src.name}</td>
+      <td style="color:var(--muted);">${src.data}</td>
+      <td>${updatedText}</td>
+      <td>${entry.data_through || '-'}</td>
+      <td style="color:var(--muted);">${src.refresh}</td>
+      <td style="color:${color};font-weight:700;">${status}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ============================================================
@@ -1731,7 +1798,7 @@ function renderCancelCharts(periods) {
 const TAMU_MARKET_COLORS = {
   'Texas': '#38bdf8',
   'Dallas-Fort Worth-Arlington': '#f87171',
-  'Houston-Pasadena-Sugar Land': '#a78bfa',
+  'Houston-Pasadena-The Woodlands': '#a78bfa',
   'San Antonio-New Braunfels': '#34d399',
   'Austin-Round Rock-San Marcos': '#f97316',
   'El Paso': '#facc15'
@@ -1739,7 +1806,7 @@ const TAMU_MARKET_COLORS = {
 const TAMU_SHORT = {
   'Texas': 'Texas',
   'Dallas-Fort Worth-Arlington': 'DFW',
-  'Houston-Pasadena-Sugar Land': 'Houston',
+  'Houston-Pasadena-The Woodlands': 'Houston',
   'San Antonio-New Braunfels': 'San Antonio',
   'Austin-Round Rock-San Marcos': 'Austin',
   'El Paso': 'El Paso'
@@ -1843,15 +1910,12 @@ async function loadTamuFromRepo() {
     if (!resp.ok) return;
     const data = await resp.json();
     if (!Array.isArray(data) || !data.length) return;
-    const seen = new Set(tamuData.map(r => r.key));
-    let added = 0;
-    for (const r of data) {
-      if (!seen.has(r.key)) { seen.add(r.key); tamuData.push(r); added++; }
-    }
-    if (added > 0 || tamuData.length === 0) {
-      if (tamuData.length === 0) tamuData = data;
-      await dbPut('csv_cache', 'tamu_housing', { data: tamuData, ts: Date.now() });
-    }
+    // The repo copy is refreshed from TRERC by a workflow and carries their
+    // revisions, so it wins over browser-cached rows for the same month.
+    const byKey = new Map(tamuData.map(r => [r.key, r]));
+    for (const r of data) byKey.set(r.key, r);
+    tamuData = [...byKey.values()];
+    await dbPut('csv_cache', 'tamu_housing', { data: tamuData, ts: Date.now() });
   } catch(e) {}
 }
 

@@ -1,0 +1,28 @@
+{
+  "sources": {
+    "realtor": {
+      "updated": "2026-10-05T13:53:06Z",
+      "data_through": "2026-09"
+    },
+    "fred": {
+      "updated": "2026-10-05T13:53:06Z",
+      "data_through": "2026-10-01"
+    },
+    "zillow": {
+      "updated": "2026-10-05T15:34:59Z",
+      "data_through": "2026-08 (monthly), 2026-09-19 (weekly)"
+    },
+    "redfin": {
+      "updated": "2026-10-05T16:33:51Z",
+      "data_through": "2026-08"
+    },
+    "mba": {
+      "updated": "2026-09-30T19:52:26Z",
+      "data_through": "2026-09-30"
+    },
+    "tamu": {
+      "updated": "2026-10-06T22:09:15Z",
+      "data_through": "2026-08"
+    }
+  }
+}

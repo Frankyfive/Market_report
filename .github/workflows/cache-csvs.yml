@@ -76,5 +76,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/cache/
-          git diff --staged --quiet || git commit -m "Cache Realtor.com CSVs + FRED - $(date -u +%Y-%m-%d)"
+          if ! git diff --staged --quiet; then
+            python3 scripts/update_log.py realtor fred
+            git add data/update_log.json
+            git commit -m "Cache Realtor.com CSVs + FRED - $(date -u +%Y-%m-%d)"
+          fi
           git push
