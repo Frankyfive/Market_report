@@ -1,12 +1,12 @@
 {
   "sources": {
     "realtor": {
-      "updated": "2026-10-12T14:41:40Z",
+      "updated": "2026-10-19T12:26:27Z",
       "data_through": "2026-09"
     },
     "fred": {
-      "updated": "2026-10-12T14:41:40Z",
-      "data_through": "2026-10-08"
+      "updated": "2026-10-19T12:26:27Z",
+      "data_through": "2026-10-15"
     },
     "zillow": {
       "updated": "2026-10-12T16:31:05Z",
